@@ -14,5 +14,8 @@
     "react": "latest",
     "react-dom": "latest",
     "tailwindcss": "latest"
-  }
+  },
+  "engines": {
+  "node": "20.x"
+}
 }
