@@ -19,6 +19,12 @@ export default function WaitlistForm() {
       body: JSON.stringify({ email, role }),
     });
 
+    await fetch('/api/send-confirmation', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email }),
+    });
+
     setSubmitted(true);
   } catch (err) {
     alert('Something went wrong. Try again.');
