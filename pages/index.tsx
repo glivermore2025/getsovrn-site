@@ -13,7 +13,7 @@ export default function Home() {
 
       <header className="flex items-center justify-between p-6 border-b border-gray-800">
         <div className="flex items-center space-x-3">
-          <Image src="/logo.png" alt="SOVRN Logo" width={80} height={80} />
+          <Image src="/logo.png" alt="SOVRN Logo" width={200} height={200} />
           
           
         </div>
