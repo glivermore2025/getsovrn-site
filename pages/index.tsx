@@ -30,3 +30,15 @@ export default function Home() {
     </div>
   );
 }
+
+import WaitlistForm from '@/components/WaitlistForm';
+
+export default function Home() {
+  return (
+    <main className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+      <div className="max-w-md w-full">
+        <WaitlistForm />
+      </div>
+    </main>
+  );
+}
