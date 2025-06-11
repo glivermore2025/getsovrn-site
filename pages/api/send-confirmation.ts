@@ -7,7 +7,12 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).send('Method not allowed');
 
-  const { email } = req.body;
+  const { email, nickname } = req.body;
+
+// 🛡️ Honeypot: If the nickname field is filled, it's probably a bot
+if (nickname) {
+  return res.status(400).json({ error: 'Spam detected.' });
+}
 
   try {
     const data = await resend.emails.send({
