@@ -10,16 +10,22 @@ export default function WaitlistForm() {
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  e.preventDefault();
+  setLoading(true);
 
-    // Simulate backend call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
+  try {
+    await fetch('https://script.google.com/macros/s/AKfycbyR1GOdjL3npozWeSYyJBrFpX3GMn59tR9RTaZUJtdW-z1pu6aFcPUnTHQQcwYOiz04/exec', {
+      method: 'POST',
+      body: JSON.stringify({ email, role }),
+    });
+
     setSubmitted(true);
-    setLoading(false);
+  } catch (err) {
+    alert('Something went wrong. Try again.');
+  }
 
-    // TODO: Connect to backend (Supabase, Airtable, etc.)
-  };
+  setLoading(false);
+};
 
   if (submitted) {
     return (
