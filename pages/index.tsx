@@ -28,7 +28,7 @@ export default function Home() {
           Own Your Data. <span className="text-blue-400">Monetize It.</span>
         </h2>
         <p className="text-lg text-gray-300 mb-10">
-          GetSovrn empowers you to control, compile, and sell your data directly to interested buyers.
+          SOVRN empowers you to control, compile, and sell your data directly to interested buyers.
         </p>
         <a
           href="#waitlist"
