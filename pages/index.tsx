@@ -14,7 +14,8 @@ export default function Home() {
       <header className="flex items-center justify-between p-6 border-b border-gray-800">
         <div className="flex items-center space-x-3">
           <Image src="/logo.png" alt="SOVRN Logo" width={80} height={80} />
-          <h1 className="text-xl font-bold tracking-wide">SOVRN</h1>
+          
+          
         </div>
         <nav className="space-x-6 text-sm">
           <a href="#about" className="hover:text-blue-400">About</a>
