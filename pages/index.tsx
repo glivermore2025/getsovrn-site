@@ -25,6 +25,17 @@ export default function Home() {
         </a>
       </main>
 
+       <div style={{ display: 'none' }}>
+    <label htmlFor="nickname">Nickname</label>
+    <input
+      type="text"
+      name="nickname"
+      id="nickname"
+      autoComplete="off"
+      tabIndex={-1}
+    />
+  </div>
+
        <main className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
       <div className="max-w-md w-full">
         <WaitlistForm />
