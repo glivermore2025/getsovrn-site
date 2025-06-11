@@ -19,7 +19,8 @@
   "devDependencies": {
     "typescript": "^5.4.0",
     "@types/react": "^18.2.0",
-    "@types/node": "^20.11.0"
+    "@types/node": "^20.11.0",
+    "@tailwindcss/postcss": "^1.0.0"
   },
   "engines": {
   "node": "20.x"
