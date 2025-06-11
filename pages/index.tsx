@@ -1,5 +1,5 @@
 import Head from 'next/head';
-import WaitlistForm from '/components/WaitlistForm';
+import WaitlistForm from '../components/WaitlistForm';
 
 export default function Home() {
   return (
@@ -23,10 +23,13 @@ export default function Home() {
         >
           Join the Waitlist
         </a>
-         <div className="max-w-md w-full">
+      </main>
+
+       <main className="min-h-screen flex items-center justify-center bg-gray-900 px-4">
+      <div className="max-w-md w-full">
         <WaitlistForm />
       </div>
-      </main>
+    </main>
 
       <footer className="w-full py-6 border-t text-sm text-gray-500 mt-10">
         © {new Date().getFullYear()} GetSovrn. All rights reserved.
