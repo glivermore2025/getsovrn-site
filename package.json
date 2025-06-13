@@ -14,7 +14,8 @@
     "react": "latest",
     "react-dom": "latest",
     "tailwindcss": "latest",
-     "resend": "^1.0.0"
+    "resend": "^1.0.0",
+    "@supabase/supabase-js": "^2.39.5"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
