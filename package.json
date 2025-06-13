@@ -15,7 +15,8 @@
     "react-dom": "latest",
     "tailwindcss": "latest",
     "resend": "^1.0.0",
-    "@supabase/supabase-js": "^2.39.5"
+    "@supabase/supabase-js": "^2.39.5",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
