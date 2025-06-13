@@ -1,72 +1,162 @@
-// This will be your initial scaffold for Sovrn Marketplace MVP
-// We are using Next.js with Supabase auth & database integration
+// /pages/dashboard.tsx
 
 import Head from 'next/head';
-import { useState } from 'react';
-import { createClient } from '@supabase/supabase-js';
+import { useState, useEffect } from 'react';
+import { supabase } from '../lib/supabaseClient';
+import { v4 as uuidv4 } from 'uuid';
 
-// Supabase client (you will set these environment variables in Vercel)
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL as string;
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY as string;
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
-
-export default function Home() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [price, setPrice] = useState('');
+  const [tags, setTags] = useState('');
+  const [file, setFile] = useState<File | null>(null);
+  const [listings, setListings] = useState<any[]>([]);
   const [error, setError] = useState('');
 
-  const handleSignUp = async () => {
-    const { data, error } = await supabase.auth.signUp({ email, password });
-    if (error) setError(error.message);
-    else setUser(data.user);
+  useEffect(() => {
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data?.user);
+      if (data?.user) fetchListings(data.user.id);
+    });
+  }, []);
+
+  const fetchListings = async (userId: string) => {
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: false });
+
+    if (!error) setListings(data || []);
   };
 
-  const handleSignIn = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) setError(error.message);
-    else setUser(data.user);
+  const handleSubmit = async (e: any) => {
+    e.preventDefault();
+
+    if (!file || !user) {
+      setError('Please upload a file and make sure you are logged in.');
+      return;
+    }
+
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${uuidv4()}.${fileExt}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from('datasets')
+      .upload(fileName, file);
+
+    if (uploadError) {
+      setError('File upload failed.');
+      return;
+    }
+
+    const { error: insertError } = await supabase.from('listings').insert([
+      {
+        user_id: user.id,
+        title,
+        description,
+        price: parseFloat(price),
+        tags: tags.split(',').map((t) => t.trim()),
+        file_path: fileName,
+      },
+    ]);
+
+    if (insertError) {
+      setError('Failed to save listing.');
+      return;
+    }
+
+    setTitle('');
+    setDescription('');
+    setPrice('');
+    setTags('');
+    setFile(null);
+    setError('');
+    fetchListings(user.id);
   };
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-6">
+    <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head>
-        <title>Sovrn Marketplace MVP</title>
+        <title>Seller Dashboard – Sovrn</title>
       </Head>
 
-      <header className="mb-12">
-        <h1 className="text-4xl font-bold">Sovrn Marketplace</h1>
-        <p className="text-gray-400 mt-2">Own, price, and list your data for buyers.</p>
-      </header>
+      <h1 className="text-3xl font-bold mb-6">Seller Dashboard</h1>
 
       {!user ? (
-        <div className="max-w-sm mx-auto bg-gray-900 p-6 rounded shadow">
-          <h2 className="text-xl font-semibold mb-4">Sign Up / Sign In</h2>
-          <input
-            type="email"
-            placeholder="Email"
-            className="w-full p-2 mb-3 bg-gray-800 rounded"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-          />
-          <input
-            type="password"
-            placeholder="Password"
-            className="w-full p-2 mb-3 bg-gray-800 rounded"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-          <div className="flex space-x-3">
-            <button onClick={handleSignUp} className="flex-1 bg-blue-600 py-2 rounded">Sign Up</button>
-            <button onClick={handleSignIn} className="flex-1 bg-green-600 py-2 rounded">Sign In</button>
-          </div>
-          {error && <p className="mt-4 text-red-400">{error}</p>}
-        </div>
+        <p className="text-red-400">You must be logged in to create listings.</p>
       ) : (
-        <div className="text-center">
-          <h2 className="text-2xl mb-4">Welcome, {user.email}!</h2>
-          <p className="text-gray-400">You're now ready to list your data for sale.</p>
-        </div>
+        <>
+          <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md mb-10">
+            <h2 className="text-xl font-semibold mb-4">Create New Listing</h2>
+
+            <input
+              type="text"
+              placeholder="Title"
+              className="w-full p-2 rounded bg-gray-800"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              required
+            />
+
+            <textarea
+              placeholder="Description"
+              className="w-full p-2 rounded bg-gray-800"
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+            />
+
+            <input
+              type="text"
+              placeholder="Tags (comma-separated)"
+              className="w-full p-2 rounded bg-gray-800"
+              value={tags}
+              onChange={(e) => setTags(e.target.value)}
+            />
+
+            <input
+              type="number"
+              placeholder="Price (USD)"
+              className="w-full p-2 rounded bg-gray-800"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+            />
+
+            <input
+              type="file"
+              className="w-full p-2 rounded bg-gray-800"
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              required
+            />
+
+            <button type="submit" className="bg-blue-600 py-2 px-4 rounded w-full">
+              Submit Listing
+            </button>
+
+            {error && <p className="text-red-400">{error}</p>}
+          </form>
+
+          <div>
+            <h2 className="text-xl font-semibold mb-4">Your Listings</h2>
+            {listings.length === 0 ? (
+              <p>No listings yet.</p>
+            ) : (
+              <ul className="space-y-4">
+                {listings.map((listing) => (
+                  <li key={listing.id} className="bg-gray-800 p-4 rounded">
+                    <h3 className="text-lg font-semibold">{listing.title}</h3>
+                    <p className="text-sm text-gray-400">{listing.description}</p>
+                    <p className="text-sm text-gray-300">${listing.price.toFixed(2)}</p>
+                    <p className="text-sm text-gray-400">Tags: {listing.tags.join(', ')}</p>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </>
       )}
     </div>
   );
