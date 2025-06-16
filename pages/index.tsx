@@ -1,10 +1,9 @@
 import Head from 'next/head';
-import Layout from '../components/Layout';
 import WaitlistForm from '../components/WaitlistForm';
 
 export default function Home() {
   return (
-    <Layout>
+  
       <Head>
         <title>Sovrn – Own Your Data</title>
         <meta name="description" content="Monetize your personal data on Sovrn Marketplace." />
@@ -31,6 +30,5 @@ export default function Home() {
           <WaitlistForm />
         </div>
       </div>
-    </Layout>
   );
 }
