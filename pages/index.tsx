@@ -12,11 +12,7 @@ export default function Home() {
 
       <header className="flex justify-between items-center mb-16">
         <h1 className="text-3xl font-bold">SOVRN</h1>
-            <div className="flex items-center space-x-3">
-          <Image src="/logo.png" alt="SOVRN Logo" width={200} height={200} />
-          
-          
-        </div>
+        
         <nav className="space-x-6 text-sm">
           <Link href="/marketplace" className="hover:text-blue-400">Marketplace</Link>
           <Link href="/dashboard" className="hover:text-blue-400">Seller Dashboard</Link>
