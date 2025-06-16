@@ -1,12 +1,12 @@
-// /pages/marketplace.tsx
-
 import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '../lib/supabaseClient';
+import axios from 'axios';
 
 export default function Marketplace() {
   const [listings, setListings] = useState<any[]>([]);
+  const [loading, setLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchListings();
@@ -19,6 +19,18 @@ export default function Marketplace() {
       .order('created_at', { ascending: false });
 
     if (!error) setListings(data || []);
+  };
+
+  const handlePurchase = async (listingId: string) => {
+    setLoading(listingId);
+    try {
+      const res = await axios.post('/api/checkout_sessions', { listingId });
+      window.location.href = `https://checkout.stripe.com/pay/${res.data.id}`;
+    } catch (err) {
+      alert('Failed to initiate payment.');
+    } finally {
+      setLoading(null);
+    }
   };
 
   return (
@@ -40,11 +52,21 @@ export default function Marketplace() {
               <p className="text-sm text-gray-300 mb-2">${listing.price.toFixed(2)}</p>
               <p className="text-sm text-gray-400 mb-2">Tags: {listing.tags?.join(', ')}</p>
 
-              <Link href={`/listing/${listing.id}`}>
-                <span className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
-                  View Details
-                </span>
-              </Link>
+              <div className="flex space-x-2">
+                <Link href={`/listing/${listing.id}`}>
+                  <span className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
+                    View Details
+                  </span>
+                </Link>
+
+                <button
+                  onClick={() => handlePurchase(listing.id)}
+                  disabled={loading === listing.id}
+                  className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                >
+                  {loading === listing.id ? 'Processing...' : 'Buy Data'}
+                </button>
+              </div>
             </div>
           ))}
         </div>
