@@ -3,7 +3,7 @@ import WaitlistForm from '../components/WaitlistForm';
 
 export default function Home() {
   return (
-  
+    <div>
       <Head>
         <title>Sovrn – Own Your Data</title>
         <meta name="description" content="Monetize your personal data on Sovrn Marketplace." />
@@ -29,6 +29,7 @@ export default function Home() {
         <div className="max-w-md mx-auto">
           <WaitlistForm />
         </div>
+      </div>
       </div>
   );
 }
