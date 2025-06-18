@@ -8,11 +8,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
-      setUser(data?.user);
-    });
-  }, []);
+useEffect(() => {
+  const checkSession = async () => {
+    const { data } = await supabase.auth.getUser();
+    if (data?.user) setUser(data.user); // your existing user state setter
+  };
+  checkSession();
+}, []);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
