@@ -14,9 +14,10 @@ export default function Marketplace() {
 
   const fetchListings = async () => {
     const { data, error } = await supabase
-      .from('listings')
-      .select('*')
-      .order('created_at', { ascending: false });
+  .from('listings')
+  .select('*')
+  .eq('is_flagged', false)
+  .order('created_at', { ascending: false });
 
     if (!error) setListings(data || []);
   };
