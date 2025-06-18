@@ -27,14 +27,19 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Link href="/marketplace" className="hover:text-blue-400">Marketplace</Link>
           <Link href="/dashboard" className="hover:text-blue-400">Dashboard</Link>
 
-          {user ? (
-            <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 py-1 px-4 rounded">Logout</button>
-          ) : (
-            <>
-              <Link href="/login" className="bg-blue-600 hover:bg-blue-700 py-1 px-4 rounded">Login</Link>
-              <Link href="/signup" className="bg-green-600 hover:bg-green-700 py-1 px-4 rounded">Sign Up</Link>
-            </>
-          )}
+         {user ? (
+  <div className="flex items-center space-x-4">
+    {ADMIN_USER_IDS.includes(user.id) && (
+      <Link href="/admin" className="bg-yellow-600 hover:bg-yellow-700 py-1 px-4 rounded">Admin</Link>
+    )}
+    <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 py-1 px-4 rounded">Logout</button>
+  </div>
+) : (
+  <>
+    <Link href="/login" className="bg-blue-600 hover:bg-blue-700 py-1 px-4 rounded">Login</Link>
+    <Link href="/signup" className="bg-green-600 hover:bg-green-700 py-1 px-4 rounded">Sign Up</Link>
+  </>
+)}
         </nav>
       </header>
 
