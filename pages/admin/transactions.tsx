@@ -17,22 +17,44 @@ export default function AdminTransactions() {
   }, []);
 
   const fetchTransactions = async () => {
-    const { data } = await supabase.from('transactions').select('*');
+    const { data } = await supabase
+      .from('transactions')
+      .select('*')
+      .order('created_at', { ascending: false });
     if (data) setTransactions(data);
   };
 
   return (
-    <div className="text-white p-8 bg-gray-950 min-h-screen">
-      <h1 className="text-2xl font-bold mb-4">Transactions</h1>
-      <ul className="space-y-2">
-        {transactions.map((tx) => (
-          <li key={tx.id} className="border p-4 rounded bg-gray-800">
-            <p>Listing: {tx.listing_id}</p>
-            <p>Buyer: {tx.buyer_id}</p>
-            <p>Amount: ${tx.purchase_price}</p>
-          </li>
-        ))}
-      </ul>
+    <div className="min-h-screen bg-gray-950 text-white p-8">
+      <h1 className="text-2xl font-bold mb-6">Transaction History</h1>
+      {transactions.length === 0 ? (
+        <p>No transactions recorded yet.</p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full border border-gray-700">
+            <thead className="bg-gray-800">
+              <tr>
+                <th className="p-2 border border-gray-700">Buyer</th>
+                <th className="p-2 border border-gray-700">Listing ID</th>
+                <th className="p-2 border border-gray-700">Amount</th>
+                <th className="p-2 border border-gray-700">Status</th>
+                <th className="p-2 border border-gray-700">Date</th>
+              </tr>
+            </thead>
+            <tbody>
+              {transactions.map((tx) => (
+                <tr key={tx.id} className="text-sm">
+                  <td className="p-2 border border-gray-800">{tx.buyer_id}</td>
+                  <td className="p-2 border border-gray-800">{tx.listing_id}</td>
+                  <td className="p-2 border border-gray-800">${tx.purchase_price?.toFixed(2)}</td>
+                  <td className="p-2 border border-gray-800">{tx.status || '—'}</td>
+                  <td className="p-2 border border-gray-800">{tx.created_at ? new Date(tx.created_at).toLocaleString() : '—'}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
     </div>
   );
 }
