@@ -26,6 +26,7 @@ export default function AdminDashboard() {
         <li><a href="/admin/users" className="text-blue-400 hover:underline">Users</a></li>
         <li><a href="/admin/listings" className="text-blue-400 hover:underline">Listings</a></li>
         <li><a href="/admin/transactions" className="text-blue-400 hover:underline">Transactions</a></li>
+        <li><a href="/admin/metrics" className="text-blue-400 hover:underline">Metrics</a></li>
       </ul>
     </div>
   );
