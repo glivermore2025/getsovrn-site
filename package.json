@@ -19,7 +19,8 @@
     "uuid": "^9.0.0",
     "axios": "^1.5.0",
     "stripe": "^12.18.0",
-    "micro": "^9.3.4"
+    "micro": "^9.3.4",
+    "recharts": "^2.8.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
