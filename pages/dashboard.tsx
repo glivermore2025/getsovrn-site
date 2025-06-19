@@ -45,9 +45,12 @@ export default function Dashboard() {
 
     const { error: uploadError } = await supabase.storage
       .from('datasets')
-      .upload(fileName, file);
+      .upload(fileName, file, {
+        contentType: file.type,
+      });
 
     if (uploadError) {
+      console.error('Upload error:', uploadError);
       setError('File upload failed.');
       return;
     }
@@ -64,6 +67,7 @@ export default function Dashboard() {
     ]);
 
     if (insertError) {
+      console.error('Insert error:', insertError);
       setError('Failed to save listing.');
       return;
     }
