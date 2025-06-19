@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 
@@ -40,13 +41,13 @@ export default function Login() {
         className="w-full p-2 mb-4 bg-gray-800 rounded"
       />
 
-      <button onClick={handleLogin} className="bg-green-600 py-2 w-full rounded mb-4">Log In</button>
+      <button onClick={handleLogin} className="bg-green-600 py-2 w-full rounded mb-2">Log In</button>
 
-      {error && <p className="text-red-400">{error}</p>}
+      <div className="text-sm text-blue-400 hover:underline text-center mb-4">
+        <Link href="/forgot-password">Forgot your password?</Link>
+      </div>
 
-      <Link href="/forgot-password" className="text-sm text-blue-400 hover:underline">
-  Forgot your password?
-</Link>
+      {error && <p className="text-red-400 text-center">{error}</p>}
     </div>
   );
 }
