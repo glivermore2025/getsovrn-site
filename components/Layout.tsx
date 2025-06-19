@@ -24,7 +24,11 @@ useEffect(() => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
       <header className="flex justify-between items-center p-6 border-b border-gray-800">
-        <Link href="/" className="text-2xl font-bold">SOVRN</Link>
+      <Link href="/" className="flex items-center space-x-2">
+  <img src="/logo.png" alt="Sovrn logo" className="h-8 w-8 object-contain" />
+  <span className="text-2xl font-bold">SOVRN</span>
+</Link>
+
 
         <nav className="flex items-center space-x-6 text-sm">
           <Link href="/marketplace" className="hover:text-blue-400">Marketplace</Link>
