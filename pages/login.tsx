@@ -43,6 +43,10 @@ export default function Login() {
       <button onClick={handleLogin} className="bg-green-600 py-2 w-full rounded mb-4">Log In</button>
 
       {error && <p className="text-red-400">{error}</p>}
+
+      <Link href="/forgot-password" className="text-sm text-blue-400 hover:underline">
+  Forgot your password?
+</Link>
     </div>
   );
 }
