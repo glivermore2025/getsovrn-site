@@ -7,6 +7,7 @@ export default function Home() {
       <Head>
         <title>Sovrn – Own Your Data</title>
         <meta name="description" content="Monetize your personal data on Sovrn Marketplace." />
+        <link rel="icon" href="/favicon.ico" />
       </Head>
 
       <div className="text-center">
