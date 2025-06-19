@@ -26,7 +26,7 @@ useEffect(() => {
       <header className="flex justify-between items-center p-6 border-b border-gray-800">
       <Link href="/" className="flex items-center space-x-2">
   <img src="/logo.png" alt="Sovrn logo" className="h-8 w-8 object-contain" />
-  <span className="text-2xl font-bold">SOVRN</span>
+  
 </Link>
 
 
