@@ -25,7 +25,7 @@ useEffect(() => {
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
       <header className="flex justify-between items-center p-6 border-b border-gray-800">
       <Link href="/" className="flex items-center space-x-2">
-  <img src="/logo.png" alt="Sovrn logo" className="h-8 w-8 object-contain" />
+  <img src="/logo.png" alt="Sovrn logo" className="h-16 w-16 object-contain" />
   
 </Link>
 
