@@ -34,14 +34,14 @@ export default function Marketplace() {
     let result = [...listings];
 
     if (search) {
-      result = result.filter(l =>
+      result = result.filter((l) =>
         l.title.toLowerCase().includes(search.toLowerCase()) ||
         l.description.toLowerCase().includes(search.toLowerCase())
       );
     }
 
     if (tag !== 'all') {
-      result = result.filter(l => l.tags?.includes(tag));
+      result = result.filter((l) => l.tags?.includes(tag));
     }
 
     if (sort === 'price_low') {
@@ -67,23 +67,23 @@ export default function Marketplace() {
     }
   };
 
-  const uniqueTags = Array.from(new Set(listings.flatMap(l => l.tags || [])));
+  const uniqueTags = Array.from(new Set(listings.flatMap((l) => l.tags || [])));
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-6 md:p-10">
       <Head>
         <title>Marketplace – Sovrn</title>
       </Head>
 
-      <h1 className="text-3xl font-bold mb-6">Marketplace</h1>
+      <h1 className="text-4xl font-bold mb-8 text-center">Data Marketplace</h1>
 
-      <div className="flex flex-wrap gap-4 mb-8">
+      <div className="flex flex-wrap gap-4 justify-center mb-10">
         <input
           type="text"
           value={search}
           onChange={(e) => setSearch(e.target.value)}
-          placeholder="Search..."
-          className="px-4 py-2 rounded bg-gray-800 border border-gray-700"
+          placeholder="Search listings..."
+          className="px-4 py-2 rounded bg-gray-800 border border-gray-700 w-full sm:w-64"
         />
 
         <select
@@ -109,25 +109,31 @@ export default function Marketplace() {
       </div>
 
       {filtered.length === 0 ? (
-        <p>No listings found.</p>
+        <p className="text-center text-gray-400 mt-20">No listings found.</p>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
           {filtered.map((listing) => (
-            <div key={listing.id} className="bg-gray-900 p-4 rounded">
-              <h3 className="text-xl font-semibold mb-2">{listing.title}</h3>
-              <p className="text-sm text-gray-400 mb-4">{listing.description}</p>
-              <p className="text-sm text-gray-300 mb-2">${listing.price.toFixed(2)}</p>
-              <p className="text-sm text-gray-400 mb-2">Tags: {listing.tags?.join(', ')}</p>
+            <div key={listing.id} className="bg-gray-900 p-6 rounded-xl shadow hover:shadow-blue-700/30 transition">
+              <h3 className="text-2xl font-semibold mb-2 text-white">{listing.title}</h3>
+              <p className="text-sm text-gray-400 mb-4 line-clamp-3">{listing.description}</p>
+              <p className="text-lg font-bold text-green-400 mb-2">${listing.price.toFixed(2)}</p>
+              {listing.tags?.length > 0 && (
+                <p className="text-sm text-gray-300 mb-4">
+                  Tags: <span className="text-blue-400">{listing.tags.join(', ')}</span>
+                </p>
+              )}
+
               <div className="flex space-x-2">
                 <Link href={`/listing/${listing.id}`}>
-                  <span className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 cursor-pointer">
+                  <span className="flex-1 text-center bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
                     View Details
                   </span>
                 </Link>
+
                 <button
                   onClick={() => handlePurchase(listing.id)}
                   disabled={loading === listing.id}
-                  className="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
+                  className="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium"
                 >
                   {loading === listing.id ? 'Processing...' : 'Buy Data'}
                 </button>
