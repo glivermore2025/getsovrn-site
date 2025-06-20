@@ -4,6 +4,7 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
+import Papa from 'papaparse';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
@@ -14,6 +15,8 @@ export default function Dashboard() {
   const [file, setFile] = useState<File | null>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [error, setError] = useState('');
+  const [previewData, setPreviewData] = useState<any>(null);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {
@@ -79,6 +82,22 @@ export default function Dashboard() {
     setFile(null);
     setError('');
     fetchListings(user.id);
+  };
+
+  const handlePreview = async (path: string) => {
+    const { data, error } = await supabase.storage.from('datasets').download(path);
+    if (error || !data) return alert('Failed to load file.');
+
+    const text = await data.text();
+    const parsed = Papa.parse(text, { header: true });
+
+    setPreviewData({
+      file: path,
+      rows: parsed.data.length,
+      columns: parsed.meta.fields?.length || 0,
+      headers: parsed.meta.fields || [],
+    });
+    setShowModal(true);
   };
 
   return (
@@ -170,10 +189,34 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">{listing.description}</p>
                     <p className="text-sm text-gray-300">${listing.price.toFixed(2)}</p>
                     <p className="text-sm text-gray-400">Tags: {listing.tags.join(', ')}</p>
+                    <button
+                      onClick={() => handlePreview(listing.file_path)}
+                      className="mt-2 text-blue-400 underline text-sm"
+                    >
+                      Preview Data
+                    </button>
                   </li>
                 ))}
               </ul>
             )}
+          </div>
+        </div>
+      )}
+
+      {showModal && previewData && (
+        <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
+          <div className="bg-gray-900 p-6 rounded shadow-lg max-w-md w-full">
+            <h3 className="text-xl font-bold mb-4">Data Preview</h3>
+            <p className="text-sm mb-1">File: {previewData.file}</p>
+            <p className="text-sm mb-1">Columns: {previewData.columns}</p>
+            <p className="text-sm mb-1">Rows: {previewData.rows}</p>
+            <p className="text-sm mb-2">Headers: {previewData.headers.join(', ')}</p>
+            <button
+              onClick={() => setShowModal(false)}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mt-4"
+            >
+              Close
+            </button>
           </div>
         </div>
       )}
