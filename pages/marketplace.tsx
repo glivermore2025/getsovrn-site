@@ -123,7 +123,7 @@ export default function Marketplace() {
                 </p>
               )}
 
-              <div className="flex space-x-2">
+             <div className="flex justify-center gap-2 mt-4">
                 <Link href={`/listing/${listing.id}`}>
                   <span className="flex-1 text-center bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
                     View Details
