@@ -92,55 +92,70 @@ export default function Dashboard() {
       {!user ? (
         <p className="text-red-400">You must be logged in to create listings.</p>
       ) : (
-        <>
-          <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md mb-10">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md">
             <h2 className="text-xl font-semibold mb-4">Create New Listing</h2>
 
-            <input
-              type="text"
-              placeholder="Title"
-              className="w-full p-2 rounded bg-gray-800"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              required
-            />
+            <div>
+              <label className="block text-sm mb-1">Title</label>
+              <input
+                type="text"
+                placeholder="Title"
+                className="w-full p-2 rounded bg-gray-800"
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
+                required
+              />
+            </div>
 
-            <textarea
-              placeholder="Description"
-              className="w-full p-2 rounded bg-gray-800"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
+            <div>
+              <label className="block text-sm mb-1">Description</label>
+              <textarea
+                placeholder="Description"
+                className="w-full p-2 rounded bg-gray-800"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+              />
+            </div>
 
-            <input
-              type="text"
-              placeholder="Tags (comma-separated)"
-              className="w-full p-2 rounded bg-gray-800"
-              value={tags}
-              onChange={(e) => setTags(e.target.value)}
-            />
+            <div>
+              <label className="block text-sm mb-1">Tags (comma-separated)</label>
+              <input
+                type="text"
+                placeholder="e.g. finance, location, health"
+                className="w-full p-2 rounded bg-gray-800"
+                value={tags}
+                onChange={(e) => setTags(e.target.value)}
+              />
+            </div>
 
-            <input
-              type="number"
-              placeholder="Price (USD)"
-              className="w-full p-2 rounded bg-gray-800"
-              value={price}
-              onChange={(e) => setPrice(e.target.value)}
-              required
-            />
+            <div>
+              <label className="block text-sm mb-1">Price (USD)</label>
+              <input
+                type="number"
+                placeholder="Price"
+                className="w-full p-2 rounded bg-gray-800"
+                value={price}
+                onChange={(e) => setPrice(e.target.value)}
+                required
+              />
+            </div>
 
-            <input
-              type="file"
-              className="w-full p-2 rounded bg-gray-800"
-              onChange={(e) => setFile(e.target.files?.[0] || null)}
-              required
-            />
+            <div>
+              <label className="block text-sm mb-1">Upload File</label>
+              <input
+                type="file"
+                className="w-full p-2 rounded bg-gray-800"
+                onChange={(e) => setFile(e.target.files?.[0] || null)}
+                required
+              />
+            </div>
 
             <button type="submit" className="bg-blue-600 py-2 px-4 rounded w-full">
               Submit Listing
             </button>
 
-            {error && <p className="text-red-400">{error}</p>}
+            {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           </form>
 
           <div>
@@ -160,7 +175,7 @@ export default function Dashboard() {
               </ul>
             )}
           </div>
-        </>
+        </div>
       )}
     </div>
   );
