@@ -1,7 +1,7 @@
-// /utils/fetchListings.ts
+// utils/fetchListings.ts
 import { supabase } from '../lib/supabaseClient';
 
-export const fetchListingsByUser = async (userId: string) => {
+export const getUserListings = async (userId: string) => {
   const { data, error } = await supabase
     .from('listings')
     .select('*')
@@ -9,24 +9,9 @@ export const fetchListingsByUser = async (userId: string) => {
     .order('created_at', { ascending: false });
 
   if (error) {
-    console.error('Error fetching listings by user:', error);
+    console.error('Error fetching listings:', error);
     return [];
   }
 
   return data || [];
-};
-
-export const fetchListingById = async (id: string) => {
-  const { data, error } = await supabase
-    .from('listings')
-    .select('*')
-    .eq('id', id)
-    .single();
-
-  if (error) {
-    console.error('Error fetching listing by ID:', error);
-    return null;
-  }
-
-  return data;
 };
