@@ -133,7 +133,7 @@ export default function Marketplace() {
                 <button
                   onClick={() => handlePurchase(listing.id)}
                   disabled={loading === listing.id}
-                  className="flex-1 bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium"
+                  className="flex-1 text-center bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium"
                 >
                   {loading === listing.id ? 'Processing...' : 'Buy Data'}
                 </button>
