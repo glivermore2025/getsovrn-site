@@ -5,7 +5,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import Papa from 'papaparse';
-import { getUserListings } from '../utils/fetchListings';
+import { getUserListings } from '/utils/fetchListings';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
