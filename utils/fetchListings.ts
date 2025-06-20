@@ -15,3 +15,18 @@ export const getUserListings = async (userId: string) => {
 
   return data || [];
 };
+
+export const fetchListingById = async (id: string) => {
+  const { data, error } = await supabase
+    .from('listings')
+    .select('*')
+    .eq('id', id)
+    .single();
+
+  if (error) {
+    console.error('Error fetching listing by ID:', error);
+    return null;
+  }
+
+  return data;
+};
