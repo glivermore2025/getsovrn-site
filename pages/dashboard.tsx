@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import Papa from 'papaparse';
+import { getUserListings } from '../utils/fetchListings';
 
 export default function Dashboard() {
   const [user, setUser] = useState<any>(null);
@@ -19,21 +20,14 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       setUser(data?.user);
-      if (data?.user) fetchListings(data.user.id);
+      if (data?.user) {
+        const fetchedListings = await getUserListings(data.user.id);
+        setListings(fetchedListings);
+      }
     });
   }, []);
-
-  const fetchListings = async (userId: string) => {
-    const { data, error } = await supabase
-      .from('listings')
-      .select('*')
-      .eq('user_id', userId)
-      .order('created_at', { ascending: false });
-
-    if (!error) setListings(data || []);
-  };
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
@@ -81,7 +75,8 @@ export default function Dashboard() {
     setTags('');
     setFile(null);
     setError('');
-    fetchListings(user.id);
+    const updatedListings = await getUserListings(user.id);
+    setListings(updatedListings);
   };
 
   const handlePreview = async (path: string) => {
