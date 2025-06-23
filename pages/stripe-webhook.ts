@@ -25,9 +25,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   try {
     event = stripe.webhooks.constructEvent(buf, sig!, endpointSecret);
   } catch (err) {
-    console.error('Webhook Error:', err);
-    return res.status(400).send(`Webhook Error: ${err.message}`);
-  }
+  const errorMessage = err instanceof Error ? err.message : 'Unknown error';
+  console.error('Webhook Error:', err);
+  return res.status(400).send(`Webhook Error: ${errorMessage}`);
+}
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
