@@ -21,7 +21,8 @@
     "stripe": "^12.18.0",
     "micro": "^9.3.4",
     "recharts": "^2.8.0",
-     "papaparse": "^5.4.1"
+     "papaparse": "^5.4.1",
+    "stripe": "^13.14.0"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
