@@ -23,25 +23,31 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Listing not found' });
   }
 
-  const session = await stripe.checkout.sessions.create({
-    payment_method_types: ['card'],
-    line_items: [
-      {
-        price_data: {
-          currency: 'usd',
-          product_data: {
-            name: listing.title,
-            description: listing.description,
-          },
-          unit_amount: Math.round(listing.price * 100),
+const session = await stripe.checkout.sessions.create({
+  payment_method_types: ['card'],
+  line_items: [
+    {
+      price_data: {
+        currency: 'usd',
+        product_data: {
+          name: listing.title,
+          description: listing.description,
         },
-        quantity: 1,
+        unit_amount: Math.round(listing.price * 100),
       },
-    ],
-    mode: 'payment',
-    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
-  });
+      quantity: 1,
+    },
+  ],
+  mode: 'payment',
+  success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+  cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
+  metadata: {
+    listing_id: listing.id,
+    // Optionally: add user ID if user is authenticated
+    user_id: (await supabase.auth.getUser()).data?.user?.id || 'anonymous',
+  },
+});
+
 
   res.status(200).json({ id: session.id });
 }
