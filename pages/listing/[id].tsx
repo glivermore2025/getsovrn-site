@@ -3,6 +3,7 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import Papa from 'papaparse';
+import axios from 'axios';
 
 export default function ListingDetails() {
   const router = useRouter();
@@ -12,6 +13,7 @@ export default function ListingDetails() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
+  const [buying, setBuying] = useState(false);
 
   useEffect(() => {
     if (id) fetchListingById(id as string);
@@ -46,8 +48,20 @@ export default function ListingDetails() {
     setShowModal(true);
   };
 
-  if (loading) return <div className="p-8 text-white">Loading...</div>;
+  const handleBuyNow = async () => {
+    try {
+      setBuying(true);
+      const res = await axios.post('/api/checkout_sessions', { listingId: listing.id });
+      window.location.href = `https://checkout.stripe.com/pay/${res.data.id}`;
+    } catch (err) {
+      alert('Failed to initiate checkout.');
+      console.error(err);
+    } finally {
+      setBuying(false);
+    }
+  };
 
+  if (loading) return <div className="p-8 text-white">Loading...</div>;
   if (!listing) return <div className="p-8 text-white">Listing not found.</div>;
 
   return (
@@ -68,8 +82,12 @@ export default function ListingDetails() {
         >
           Preview Data
         </button>
-        <button className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">
-          Buy Data
+        <button
+          onClick={handleBuyNow}
+          disabled={buying}
+          className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded"
+        >
+          {buying ? 'Processing...' : 'Buy Now'}
         </button>
       </div>
 
