@@ -43,11 +43,9 @@ const session = await stripe.checkout.sessions.create({
   cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
   metadata: {
     listing_id: listing.id,
-    // Optionally: add user ID if user is authenticated
-    user_id: (await supabase.auth.getUser()).data?.user?.id || 'anonymous',
+    user_id: req.body.userId, // <- make sure you're passing this in the request
   },
 });
-
 
   res.status(200).json({ id: session.id });
 }
