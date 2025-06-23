@@ -4,7 +4,7 @@ import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
 
 export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { user } = await supabase.auth.getUser();
+ const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return {
