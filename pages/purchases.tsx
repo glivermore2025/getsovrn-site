@@ -42,4 +42,23 @@ export default function PurchasesPage({ purchases }: { purchases: any[] }) {
       <h1 className="text-3xl font-bold mb-6">My Purchased Data</h1>
 
       {purchases.length === 0 ? (
-        <p>No purchase
+        <p>No purchases found.</p>
+      ) : (
+        <ul className="space-y-4">
+          {purchases.map((purchase, i) => (
+            <li key={i} className="bg-gray-800 p-4 rounded">
+              <h3 className="text-lg font-semibold">{purchase.listings.title}</h3>
+              <a
+                href={`https://lxyozudlxyclpelnavkn.supabase.co/storage/v1/object/public/datasets/${purchase.listings.file_path}`}
+                download
+                className="text-blue-400 underline mt-2 inline-block"
+              >
+                Download File
+              </a>
+            </li>
+          ))}
+        </ul>
+      )}
+    </div>
+  );
+}
