@@ -49,17 +49,20 @@ export default function ListingDetails() {
   };
 
   const handleBuyNow = async () => {
-    try {
-      setBuying(true);
-      const res = await axios.post('/api/checkout_sessions', { listingId: listing.id });
-      window.location.href = `https://checkout.stripe.com/pay/${res.data.id}`;
-    } catch (err) {
-      alert('Failed to initiate checkout.');
-      console.error(err);
-    } finally {
-      setBuying(false);
-    }
-  };
+  try {
+    setBuying(true);
+    const res = await axios.post('/api/checkout_sessions', { listingId: listing.id });
+
+    // Redirect using the session's URL returned from Stripe
+    window.location.href = res.data.url;
+  } catch (err) {
+    alert('Failed to initiate checkout.');
+    console.error(err);
+  } finally {
+    setBuying(false);
+  }
+};
+
 
   if (loading) return <div className="p-8 text-white">Loading...</div>;
   if (!listing) return <div className="p-8 text-white">Listing not found.</div>;
