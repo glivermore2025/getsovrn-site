@@ -1,9 +1,6 @@
-// /pages/listing/[id].tsx
-
 import { useRouter } from 'next/router';
-import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { fetchListingById } from '../../utils/fetchListings';
+import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import Papa from 'papaparse';
 
@@ -13,31 +10,35 @@ export default function ListingDetails() {
 
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [previewData, setPreviewData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
+  const [previewData, setPreviewData] = useState<any>(null);
 
   useEffect(() => {
-    if (id && typeof id === 'string') {
-      loadListing(id);
-    }
+    if (id) fetchListingById(id as string);
   }, [id]);
 
-  const loadListing = async (listingId: string) => {
-    setLoading(true);
-    const data = await fetchListingById(listingId);
-    setListing(data);
+  const fetchListingById = async (listingId: string) => {
+    const { data, error } = await supabase
+      .from('listings')
+      .select('*')
+      .eq('id', listingId)
+      .single();
+
+    if (!error) setListing(data);
     setLoading(false);
   };
 
-  const handlePreview = async (path: string) => {
-    const { data, error } = await supabase.storage.from('datasets').download(path);
+  const handlePreview = async () => {
+    if (!listing?.file_path) return;
+
+    const { data, error } = await supabase.storage.from('datasets').download(listing.file_path);
     if (error || !data) return alert('Failed to load file.');
 
     const text = await data.text();
     const parsed = Papa.parse(text, { header: true });
 
     setPreviewData({
-      file: path,
+      file: listing.file_path,
       rows: parsed.data.length,
       columns: parsed.meta.fields?.length || 0,
       headers: parsed.meta.fields || [],
@@ -45,13 +46,9 @@ export default function ListingDetails() {
     setShowModal(true);
   };
 
-  if (loading) {
-    return <div className="min-h-screen bg-gray-950 text-white p-8">Loading...</div>;
-  }
+  if (loading) return <div className="p-8 text-white">Loading...</div>;
 
-  if (!listing) {
-    return <div className="min-h-screen bg-gray-950 text-white p-8">Listing not found.</div>;
-  }
+  if (!listing) return <div className="p-8 text-white">Listing not found.</div>;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -60,16 +57,21 @@ export default function ListingDetails() {
       </Head>
 
       <h1 className="text-3xl font-bold mb-4">{listing.title}</h1>
-      <p className="text-gray-400 mb-4">{listing.description}</p>
-      <p className="mb-2 text-sm text-gray-300">Price: ${listing.price.toFixed(2)}</p>
-      <p className="mb-4 text-sm text-gray-400">Tags: {listing.tags.join(', ')}</p>
+      <p className="mb-2 text-gray-400">{listing.description}</p>
+      <p className="mb-2 text-sm">Price: ${listing.price.toFixed(2)}</p>
+      <p className="mb-6 text-sm text-gray-400">Tags: {listing.tags?.join(', ')}</p>
 
-      <button
-        onClick={() => handlePreview(listing.file_path)}
-        className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded"
-      >
-        Preview Data
-      </button>
+      <div className="space-x-4">
+        <button
+          onClick={handlePreview}
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Preview Data
+        </button>
+        <button className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded">
+          Buy Data
+        </button>
+      </div>
 
       {showModal && previewData && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
