@@ -3,8 +3,17 @@ import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
 
+interface Purchase {
+  listing_id: string;
+  listings: {
+    title: string;
+    file_path: string;
+    price?: number;
+  };
+}
+
 export const getServerSideProps: GetServerSideProps = async (context) => {
- const { data: { user } } = await supabase.auth.getUser();
+  const { data: { user } } = await supabase.auth.getUser();
 
   if (!user) {
     return {
@@ -17,7 +26,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
 
   const { data: purchases, error } = await supabase
     .from('purchases')
-    .select('listing_id, listings (title, file_path)')
+    .select('listing_id, listings (title, file_path, price)')
     .eq('user_id', user.id);
 
   if (error) {
@@ -32,7 +41,21 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   };
 };
 
-export default function PurchasesPage({ purchases }: { purchases: any[] }) {
+export default function PurchasesPage({ purchases }: { purchases: Purchase[] }) {
+  const handleDownload = async (filePath: string) => {
+    const { data, error } = await supabase
+      .storage
+      .from('datasets')
+      .createSignedUrl(filePath, 60); // 60 seconds
+
+    if (data?.signedUrl) {
+      window.open(data.signedUrl, '_blank');
+    } else {
+      alert('Failed to generate download link.');
+      console.error(error);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head>
@@ -48,13 +71,15 @@ export default function PurchasesPage({ purchases }: { purchases: any[] }) {
           {purchases.map((purchase, i) => (
             <li key={i} className="bg-gray-800 p-4 rounded">
               <h3 className="text-lg font-semibold">{purchase.listings.title}</h3>
-              <a
-                href={`https://lxyozudlxyclpelnavkn.supabase.co/storage/v1/object/public/datasets/${purchase.listings.file_path}`}
-                download
+              {purchase.listings.price && (
+                <p className="text-sm text-gray-400 mb-2">Price: ${purchase.listings.price.toFixed(2)}</p>
+              )}
+              <button
+                onClick={() => handleDownload(purchase.listings.file_path)}
                 className="text-blue-400 underline mt-2 inline-block"
               >
                 Download File
-              </a>
+              </button>
             </li>
           ))}
         </ul>
