@@ -18,8 +18,9 @@ export default function PurchasesPage() {
 
   useEffect(() => {
     const fetchPurchases = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      if (!user) {
+      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      if (userError || !user) {
+        console.error('User not authenticated:', userError);
         setLoading(false);
         return;
       }
@@ -29,11 +30,21 @@ export default function PurchasesPage() {
         .select('listing_id, listings (title, file_path, price)')
         .eq('user_id', user.id);
 
-      if (!error && data) {
-        setPurchases(data);
-      } else {
+      if (error) {
         console.error('Error fetching purchases:', error);
+      } else if (data) {
+        // Validate that listings is a single object, not an array
+        const normalized = data.map((p) => ({
+          listing_id: p.listing_id,
+          listings: {
+            title: p.listings.title,
+            file_path: p.listings.file_path,
+            price: p.listings.price,
+          }
+        }));
+        setPurchases(normalized);
       }
+
       setLoading(false);
     };
 
@@ -41,9 +52,10 @@ export default function PurchasesPage() {
   }, []);
 
   const handleDownload = async (filePath: string) => {
-    const { data, error } = await supabase.storage
+    const { data, error } = await supabase
+      .storage
       .from('datasets')
-      .createSignedUrl(filePath, 60); // 60 seconds
+      .createSignedUrl(filePath, 60);
 
     if (data?.signedUrl) {
       window.open(data.signedUrl, '_blank');
