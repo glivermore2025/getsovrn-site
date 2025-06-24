@@ -58,9 +58,20 @@ export default function Marketplace() {
   const handlePurchase = async (listingId: string) => {
     setLoading(listingId);
     try {
-      const res = await axios.post('/api/checkout_sessions', { listingId });
-      window.location.href = `https://checkout.stripe.com/pay/${res.data.id}`;
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('You must be logged in to purchase.');
+        return;
+      }
+
+      const res = await axios.post('/api/checkout_sessions', {
+        listingId,
+        userId: user.id,
+      });
+
+      window.location.href = res.data.url;
     } catch (err) {
+      console.error('Checkout failed:', err);
       alert('Failed to initiate payment.');
     } finally {
       setLoading(null);
@@ -123,7 +134,7 @@ export default function Marketplace() {
                 </p>
               )}
 
-             <div className="flex justify-center gap-2 mt-4">
+              <div className="flex justify-center gap-2 mt-4">
                 <Link href={`/listing/${listing.id}`}>
                   <span className="flex-1 text-center bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded-lg text-sm font-medium cursor-pointer">
                     View Details
@@ -145,3 +156,4 @@ export default function Marketplace() {
     </div>
   );
 }
+
