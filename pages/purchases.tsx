@@ -29,13 +29,18 @@ export default function PurchasesPage() {
 
       const { data, error } = await supabase
         .from('purchases')
-        .select('listing_id, listings!inner(title, file_path, price)')
+        .select('listing_id, listings(title, file_path, price)')
         .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching purchases:', error);
       } else if (data) {
-        setPurchases(data as Purchase[]);
+        // ✅ Normalize listings to ensure it's not an array
+        const cleaned = data.map((p: any) => ({
+          listing_id: p.listing_id,
+          listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
+        }));
+        setPurchases(cleaned);
       }
 
       setLoading(false);
@@ -45,8 +50,7 @@ export default function PurchasesPage() {
   }, []);
 
   const handleDownload = async (filePath: string) => {
-    const { data, error } = await supabase
-      .storage
+    const { data, error } = await supabase.storage
       .from('datasets')
       .createSignedUrl(filePath, 60);
 
@@ -93,5 +97,3 @@ export default function PurchasesPage() {
     </div>
   );
 }
-
-
