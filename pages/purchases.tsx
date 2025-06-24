@@ -3,13 +3,15 @@ import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
 
+interface Listing {
+  title: string;
+  file_path: string;
+  price?: number;
+}
+
 interface Purchase {
   listing_id: string;
-  listings: {
-    title: string;
-    file_path: string;
-    price?: number;
-  };
+  listings: Listing;
 }
 
 export default function PurchasesPage() {
@@ -27,22 +29,13 @@ export default function PurchasesPage() {
 
       const { data, error } = await supabase
         .from('purchases')
-        .select('listing_id, listings (title, file_path, price)')
+        .select('listing_id, listings!inner(title, file_path, price)')
         .eq('user_id', user.id);
 
       if (error) {
         console.error('Error fetching purchases:', error);
       } else if (data) {
-        // Validate that listings is a single object, not an array
-        const normalized = data.map((p) => ({
-          listing_id: p.listing_id,
-          listings: {
-            title: p.listings.title,
-            file_path: p.listings.file_path,
-            price: p.listings.price,
-          }
-        }));
-        setPurchases(normalized);
+        setPurchases(data as Purchase[]);
       }
 
       setLoading(false);
