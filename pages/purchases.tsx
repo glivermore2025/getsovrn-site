@@ -11,6 +11,17 @@ interface Purchase {
   };
 }
 
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) {
+    return {
+      redirect: {
+        destination: `/login?redirectTo=${context.resolvedUrl}`,
+        permanent: false,
+      },
+    };
+  }
 
   const { data: purchases, error } = await supabase
     .from('purchases')
