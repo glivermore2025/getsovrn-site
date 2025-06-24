@@ -101,7 +101,16 @@ export default function Dashboard() {
         <title>Seller Dashboard – Sovrn</title>
       </Head>
 
-      <h1 className="text-3xl font-bold mb-6">Seller Dashboard</h1>
+     <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
+{user && (
+  <a
+    href="/purchases"
+    className="inline-block text-blue-400 underline text-sm mb-6 hover:text-blue-300"
+  >
+    → View Your Purchases
+  </a>
+)}
+
 
       {!user ? (
         <p className="text-red-400">You must be logged in to create listings.</p>
