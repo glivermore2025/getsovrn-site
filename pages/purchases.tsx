@@ -1,4 +1,3 @@
-// /pages/purchases.tsx
 import { GetServerSideProps } from 'next';
 import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
@@ -18,7 +17,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   if (!user) {
     return {
       redirect: {
-        destination: '/login',
+        destination: `/login?redirectTo=${context.resolvedUrl}`,
         permanent: false,
       },
     };
