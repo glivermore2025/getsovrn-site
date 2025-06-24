@@ -9,13 +9,14 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+  const { redirectTo } = router.query;
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
       setError(error.message);
     } else {
-      router.push('/dashboard');
+      router.push((redirectTo as string) || '/dashboard');
     }
   };
 
