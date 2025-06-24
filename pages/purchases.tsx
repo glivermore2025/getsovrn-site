@@ -1,4 +1,5 @@
-import { GetServerSideProps } from 'next';
+// /pages/purchases.tsx
+import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { supabase } from '../lib/supabaseClient';
 
@@ -11,39 +12,36 @@ interface Purchase {
   };
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { data: { user } } = await supabase.auth.getUser();
+export default function PurchasesPage() {
+  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  if (!user) {
-    return {
-      redirect: {
-        destination: `/login?redirectTo=${context.resolvedUrl}`,
-        permanent: false,
-      },
+  useEffect(() => {
+    const fetchPurchases = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        setLoading(false);
+        return;
+      }
+
+      const { data, error } = await supabase
+        .from('purchases')
+        .select('listing_id, listings (title, file_path, price)')
+        .eq('user_id', user.id);
+
+      if (!error && data) {
+        setPurchases(data);
+      } else {
+        console.error('Error fetching purchases:', error);
+      }
+      setLoading(false);
     };
-  }
 
-  const { data: purchases, error } = await supabase
-    .from('purchases')
-    .select('listing_id, listings (title, file_path, price)')
-    .eq('user_id', user.id);
+    fetchPurchases();
+  }, []);
 
-  if (error) {
-    console.error('Error fetching purchases:', error);
-    return { props: { purchases: [] } };
-  }
-
-  return {
-    props: {
-      purchases,
-    },
-  };
-};
-
-export default function PurchasesPage({ purchases }: { purchases: Purchase[] }) {
   const handleDownload = async (filePath: string) => {
-    const { data, error } = await supabase
-      .storage
+    const { data, error } = await supabase.storage
       .from('datasets')
       .createSignedUrl(filePath, 60); // 60 seconds
 
@@ -63,7 +61,9 @@ export default function PurchasesPage({ purchases }: { purchases: Purchase[] }) 
 
       <h1 className="text-3xl font-bold mb-6">My Purchased Data</h1>
 
-      {purchases.length === 0 ? (
+      {loading ? (
+        <p>Loading purchases...</p>
+      ) : purchases.length === 0 ? (
         <p>No purchases found.</p>
       ) : (
         <ul className="space-y-4">
@@ -71,7 +71,9 @@ export default function PurchasesPage({ purchases }: { purchases: Purchase[] }) 
             <li key={i} className="bg-gray-800 p-4 rounded">
               <h3 className="text-lg font-semibold">{purchase.listings.title}</h3>
               {purchase.listings.price && (
-                <p className="text-sm text-gray-400 mb-2">Price: ${purchase.listings.price.toFixed(2)}</p>
+                <p className="text-sm text-gray-400 mb-2">
+                  Price: ${purchase.listings.price.toFixed(2)}
+                </p>
               )}
               <button
                 onClick={() => handleDownload(purchase.listings.file_path)}
