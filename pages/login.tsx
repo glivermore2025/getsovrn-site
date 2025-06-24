@@ -13,10 +13,22 @@ export default function Login() {
 
   const handleLogin = async () => {
     const { error } = await supabase.auth.signInWithPassword({ email, password });
+
     if (error) {
       setError(error.message);
     } else {
-      router.push((redirectTo as string) || '/dashboard');
+      // Poll session until ready, then redirect
+      const checkSession = async (tries = 0) => {
+        const { data: sessionData } = await supabase.auth.getSession();
+        if (sessionData.session) {
+          router.push((redirectTo as string) || '/dashboard');
+        } else if (tries < 5) {
+          setTimeout(() => checkSession(tries + 1), 200);
+        } else {
+          setError('Login succeeded, but session was not established. Try refreshing.');
+        }
+      };
+      checkSession();
     }
   };
 
