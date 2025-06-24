@@ -1,34 +1,29 @@
 import { useState } from 'react';
 import Head from 'next/head';
 import Link from 'next/link';
-import { supabase } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
+import { supabase } from '../lib/supabaseClient';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-  const { redirectTo } = router.query;
+
+  const redirectTo = router.query.redirectTo as string | undefined;
+  console.log("Redirect query param:", redirectTo);
 
   const handleLogin = async () => {
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+    console.log("Login response:", { data, error });
 
     if (error) {
       setError(error.message);
+    } else if (!data.session) {
+      setError('Login failed: no session returned.');
     } else {
-      // Poll session until ready, then redirect
-      const checkSession = async (tries = 0) => {
-        const { data: sessionData } = await supabase.auth.getSession();
-        if (sessionData.session) {
-          router.push((redirectTo as string) || '/dashboard');
-        } else if (tries < 5) {
-          setTimeout(() => checkSession(tries + 1), 200);
-        } else {
-          setError('Login succeeded, but session was not established. Try refreshing.');
-        }
-      };
-      checkSession();
+      const path = redirectTo || '/dashboard';
+      router.push(path);
     }
   };
 
