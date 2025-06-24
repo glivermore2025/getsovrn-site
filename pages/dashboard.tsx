@@ -101,15 +101,9 @@ export default function Dashboard() {
         <title>Seller Dashboard – Sovrn</title>
       </Head>
 
-     <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
-{user && (
-  <a
-    href="/purchases"
-    className="inline-block text-blue-400 underline text-sm mb-6 hover:text-blue-300"
-  >
-    → View Your Purchases
-  </a>
-)}
+    <Link href="/purchases">
+  <span className="text-blue-400 underline hover:text-blue-300 cursor-pointer">View Your Purchases</span>
+</Link>
 
 
       {!user ? (
