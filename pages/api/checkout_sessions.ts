@@ -25,17 +25,29 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).json({ error: 'Listing not found' });
   }
 
- const session = await stripe.checkout.sessions.create({
-  payment_method_types: ['card'],
-  line_items: [ ... ],
-  mode: 'payment',
-  success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
-  cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
-  metadata: {
-    listing_id: listing.id,
-    user_id: req.body.userId, // if included
-  },
-});
+  const session = await stripe.checkout.sessions.create({
+    payment_method_types: ['card'],
+    line_items: [
+      {
+        price_data: {
+          currency: 'usd',
+          product_data: {
+            name: listing.title,
+            description: listing.description,
+          },
+          unit_amount: Math.round(listing.price * 100), // price in cents
+        },
+        quantity: 1,
+      },
+    ],
+    mode: 'payment',
+    success_url: `${process.env.NEXT_PUBLIC_SITE_URL}/success?session_id={CHECKOUT_SESSION_ID}`,
+    cancel_url: `${process.env.NEXT_PUBLIC_SITE_URL}/cancel`,
+    metadata: {
+      listing_id: listing.id,
+      user_id: userId || 'guest',
+    },
+  });
 
-// ✅ Correct response
-res.status(200).json({ url: session.url });
+  res.status(200).json({ url: session.url });
+}
