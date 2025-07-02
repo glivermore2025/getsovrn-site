@@ -30,17 +30,22 @@ export default function SuccessPage() {
   };
 
   const handleDownload = async () => {
-    const { data, error } = await supabase
-      .storage
-      .from('datasets')
-      .createSignedUrl(listing.file_path, 60);
+    const { data: { user } } = await supabase.auth.getUser();
+  if (!user) {
+    alert('You must be logged in to download this file.');
+    return;
+  }
+  const { data, error } = await supabase
+    .storage
+    .from('datasets')
+    .createSignedUrl(listing.file_path, 60);
 
-    if (data?.signedUrl) {
-      window.open(data.signedUrl, '_blank');
-    } else {
-      alert('Download failed.');
-      console.error(error);
-    }
+  if (data?.signedUrl) {
+    window.open(data.signedUrl, '_blank');
+  } else {
+    alert('Failed to generate download link.');
+    console.error(error);
+  }
   };
 
   return (
