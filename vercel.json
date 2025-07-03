@@ -1,7 +1,7 @@
 {
   "functions": {
     "api/stripe-webhook.ts": {
-      "memory": 512,
+      "memory": 128,
       "maxDuration": 10,
       "runtime": "nodejs18.x"
     }
