@@ -1,6 +1,6 @@
 {
   "functions": {
-    "api/stripe-webhook.ts": {
+    "pages/api/stripe-webhook.ts": {
       "memory": 128,
       "maxDuration": 10
     }
