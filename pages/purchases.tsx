@@ -35,7 +35,6 @@ export default function PurchasesPage() {
       if (error) {
         console.error('Error fetching purchases:', error);
       } else if (data) {
-        // ✅ Normalize listings to ensure it's not an array
         const cleaned = data.map((p: any) => ({
           listing_id: p.listing_id,
           listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
@@ -78,18 +77,22 @@ export default function PurchasesPage() {
         <ul className="space-y-4">
           {purchases.map((purchase, i) => (
             <li key={i} className="bg-gray-800 p-4 rounded">
-              <h3 className="text-lg font-semibold">{purchase.listings.title}</h3>
-              {purchase.listings.price && (
+              <h3 className="text-lg font-semibold">{purchase.listings?.title || 'Untitled'}</h3>
+              {purchase.listings?.price && (
                 <p className="text-sm text-gray-400 mb-2">
                   Price: ${purchase.listings.price.toFixed(2)}
                 </p>
               )}
-              <button
-                onClick={() => handleDownload(purchase.listings.file_path)}
-                className="text-blue-400 underline mt-2 inline-block"
-              >
-                Download File
-              </button>
+              {purchase.listings?.file_path ? (
+                <button
+                  onClick={() => handleDownload(purchase.listings.file_path)}
+                  className="text-blue-400 underline mt-2 inline-block"
+                >
+                  Download File
+                </button>
+              ) : (
+                <p className="text-sm text-red-400">No file available</p>
+              )}
             </li>
           ))}
         </ul>
