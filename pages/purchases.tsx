@@ -26,11 +26,8 @@ export default function PurchasesPage() {
         setLoading(false);
         return;
       }
-
-      console.log('Logged in user ID:', user.id);
-      console.log('Raw purchases data:', data);
       
-      const { data, error } = await supabase
+ const { data, error } = await supabase
   .from('purchases')
   .select(`
     listing_id,
@@ -42,7 +39,8 @@ export default function PurchasesPage() {
   `)
   .eq('user_id', user.id);
 
-      
+   console.log('Logged in user ID:', user.id);
+  console.log('Raw purchases data:', data);
 
       if (error) {
         console.error('Error fetching purchases:', error);
