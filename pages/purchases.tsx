@@ -28,9 +28,18 @@ export default function PurchasesPage() {
       }
 
       const { data, error } = await supabase
-        .from('purchases')
-        .select('listing_id, listings(title, file_path, price)')
-        .eq('user_id', user.id);
+  .from('purchases')
+  .select(`
+    listing_id,
+    listings:listing_id (
+      title,
+      file_path,
+      price
+    )
+  `)
+  .eq('user_id', user.id);
+
+      console.log('Raw purchases data:', data);
 
       if (error) {
         console.error('Error fetching purchases:', error);
