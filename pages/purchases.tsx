@@ -27,6 +27,9 @@ export default function PurchasesPage() {
         return;
       }
 
+      console.log('Logged in user ID:', user.id);
+      console.log('Raw purchases data:', data);
+      
       const { data, error } = await supabase
   .from('purchases')
   .select(`
@@ -39,7 +42,7 @@ export default function PurchasesPage() {
   `)
   .eq('user_id', user.id);
 
-      console.log('Raw purchases data:', data);
+      
 
       if (error) {
         console.error('Error fetching purchases:', error);
