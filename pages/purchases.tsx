@@ -51,12 +51,10 @@ export default function PurchasesPage() {
         console.log('Raw purchase data:', data);
 
         // Clean and validate
-        const cleaned = (data || [])
-          .filter((p) => p.listings && typeof p.listings === 'object')
-          .map((p) => ({
-            listing_id: p.listing_id,
-            listings: p.listings,
-          }));
+       const cleaned = (data || []).map((p: any) => ({
+  listing_id: p.listing_id,
+  listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
+}));
 
         setPurchases(cleaned);
       }
