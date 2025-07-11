@@ -27,7 +27,7 @@ export default function PurchasesPage() {
         return;
       }
       
- const { data, error } = await supabase
+const { data, error } = await supabase
   .from('purchases')
   .select(`
     listing_id,
@@ -39,18 +39,16 @@ export default function PurchasesPage() {
   `)
   .eq('user_id', user.id);
 
-   console.log('Logged in user ID:', user.id);
-  console.log('Raw purchases data:', data);
-
-      if (error) {
-        console.error('Error fetching purchases:', error);
-      } else if (data) {
-        const cleaned = data.map((p: any) => ({
-          listing_id: p.listing_id,
-          listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
-        }));
-        setPurchases(cleaned);
-      }
+if (error) {
+  console.error('Error fetching purchases:', error);
+} else {
+  console.log('Fetched purchases:', data);
+  const cleaned = data.map((p: any) => ({
+    listing_id: p.listing_id,
+    listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
+  }));
+  setPurchases(cleaned);
+}
 
       setLoading(false);
     };
