@@ -40,6 +40,8 @@ const { data, error } = await supabase
 
   .eq('user_id', user.id);
 
+    console.log('Logged in user ID:', user.id);
+
 if (error) {
   console.error('Error fetching purchases:', error);
 } else {
