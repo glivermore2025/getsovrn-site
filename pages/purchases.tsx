@@ -31,7 +31,7 @@ const { data, error } = await supabase
   .from('purchases')
   .select(`
     listing_id,
-    listings:listing_id (
+    public.listings:listing_id (
       title,
       file_path,
       price
