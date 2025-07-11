@@ -30,13 +30,14 @@ export default function PurchasesPage() {
 const { data, error } = await supabase
   .from('purchases')
   .select(`
-    listing_id,
-    public.listings:listing_id (
-      title,
-      file_path,
-      price
-    )
-  `)
+  listing_id,
+  listings (
+    title,
+    file_path,
+    price
+  )
+`)
+
   .eq('user_id', user.id);
 
 if (error) {
