@@ -20,40 +20,46 @@ export default function PurchasesPage() {
 
   useEffect(() => {
     const fetchPurchases = async () => {
-      const { data: { user }, error: userError } = await supabase.auth.getUser();
+      const {
+        data: { user },
+        error: userError,
+      } = await supabase.auth.getUser();
+
       if (userError || !user) {
         console.error('User not authenticated:', userError);
         setLoading(false);
         return;
       }
-      
-const { data, error } = await supabase
-  .from('purchases')
-  .select(`
-  listing_id,
-  listings (
-    title,
-    file_path,
-    price
-  )
-`)
 
-  .eq('user_id', user.id);
+      console.log('Fetching purchases for user ID:', user.id);
 
-    console.log('Logged in user ID:', user.id);
-console.log('DATA:', data);
-console.log('ERROR:', error);
+      const { data, error } = await supabase
+        .from('purchases')
+        .select(`
+          listing_id,
+          listings (
+            title,
+            file_path,
+            price
+          )
+        `)
+        .eq('user_id', user.id);
 
-if (error) {
-  console.error('Error fetching purchases:', error);
-} else {
-  console.log('Fetched purchases:', data);
-  const cleaned = data.map((p: any) => ({
-    listing_id: p.listing_id,
-    listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
-  }));
-  setPurchases(cleaned);
-}
+      if (error) {
+        console.error('Error fetching purchases:', error);
+      } else {
+        console.log('Raw purchase data:', data);
+
+        // Clean and validate
+        const cleaned = (data || [])
+          .filter((p) => p.listings && typeof p.listings === 'object')
+          .map((p) => ({
+            listing_id: p.listing_id,
+            listings: p.listings,
+          }));
+
+        setPurchases(cleaned);
+      }
 
       setLoading(false);
     };
@@ -90,7 +96,9 @@ if (error) {
         <ul className="space-y-4">
           {purchases.map((purchase, i) => (
             <li key={i} className="bg-gray-800 p-4 rounded">
-              <h3 className="text-lg font-semibold">{purchase.listings?.title || 'Untitled'}</h3>
+              <h3 className="text-lg font-semibold">
+                {purchase.listings?.title || 'Untitled'}
+              </h3>
               {purchase.listings?.price && (
                 <p className="text-sm text-gray-400 mb-2">
                   Price: ${purchase.listings.price.toFixed(2)}
