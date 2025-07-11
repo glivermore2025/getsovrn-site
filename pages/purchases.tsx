@@ -41,6 +41,8 @@ const { data, error } = await supabase
   .eq('user_id', user.id);
 
     console.log('Logged in user ID:', user.id);
+      const { data, error } = await supabase.auth.getSession();
+console.log(data?.session?.access_token);
 console.log('DATA:', data);
 console.log('ERROR:', error);
 
