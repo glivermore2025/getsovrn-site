@@ -1,10 +1,9 @@
-// pages/_app.tsx
 import type { AppProps } from 'next/app';
-import { AuthProvider } from '../lib/authContext';
-import Layout from '../components/Layout'; // If using a layout wrapper
-import '../styles/globals.css'; // If you have global styles
+import { AuthProvider } from '../lib/authContext'; // ✅ make sure this path is correct
+import Layout from '../components/Layout'; // ✅ assuming your layout is in /components
+import '../styles/globals.css';
 
-function MyApp({ Component, pageProps }: AppProps) {
+export default function MyApp({ Component, pageProps }: AppProps) {
   return (
     <AuthProvider>
       <Layout>
@@ -13,5 +12,3 @@ function MyApp({ Component, pageProps }: AppProps) {
     </AuthProvider>
   );
 }
-
-export default MyApp;
