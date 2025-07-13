@@ -1,5 +1,3 @@
-// /pages/api/stripe-webhook.ts
-
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { buffer } from 'micro';
@@ -15,10 +13,9 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
   apiVersion: '2022-11-15',
 });
 
-// Use Supabase service role key for secure server-side access
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY! // Required for bypassing RLS
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // Needed for secure RLS bypass
 );
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -50,7 +47,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     try {
-      // Check if this session has already been processed
+      // 1. Check if the session has already been handled
       const { data: existing, error: fetchError } = await supabase
         .from('purchases')
         .select('id')
@@ -63,20 +60,34 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       }
 
       if (!existing) {
-        const { error: insertError } = await supabase.from('purchases').insert([
-          {
-            user_id: userId,
-            listing_id: listingId,
-            session_id: session.id,
-          },
-        ]);
+        // 2. Insert into purchases
+        const { error: purchaseError } = await supabase.from('purchases').insert([{
+          user_id: userId,
+          listing_id: listingId,
+          session_id: session.id,
+        }]);
 
-        if (insertError) {
-          console.error('❌ Failed to insert purchase:', insertError);
+        if (purchaseError) {
+          console.error('❌ Failed to insert purchase:', purchaseError);
           return res.status(500).send('Failed to record purchase');
         }
 
-        console.log(`✅ Purchase recorded: session ${session.id}`);
+        // 3. Insert into transactions
+        const purchasePrice = session.amount_total ? session.amount_total / 100 : null;
+
+        const { error: txnError } = await supabase.from('transactions').insert([{
+          buyer_id: userId,
+          listing_id: listingId,
+          purchase_price: purchasePrice,
+          purchased_at: new Date().toISOString(),
+        }]);
+
+        if (txnError) {
+          console.error('❌ Failed to insert transaction:', txnError);
+          return res.status(500).send('Failed to record transaction');
+        }
+
+        console.log(`✅ Purchase and transaction recorded: session ${session.id}`);
       } else {
         console.log(`ℹ️ Purchase already exists for session ${session.id}`);
       }
