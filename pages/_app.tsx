@@ -3,10 +3,12 @@ import '../styles/globals.css';
 import Layout from '../components/Layout';
 import { AuthProvider } from '../lib/authContext';
 
-export default function App({ Component, pageProps }: AppProps) {
+function MyApp({ Component, pageProps }) {
   return (
     <AuthProvider>
       <Component {...pageProps} />
     </AuthProvider>
   );
 }
+
+export default MyApp;
