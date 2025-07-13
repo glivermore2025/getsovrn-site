@@ -4,9 +4,10 @@ import { supabase } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import Papa from 'papaparse';
 import { getUserListings } from '../utils/fetchListings';
+import { useAuth } from '../lib/authContext'; // ✅ import the context
 
 export default function Dashboard() {
-  const [user, setUser] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth(); // ✅ useAuth hook
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -18,18 +19,16 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
-    supabase.auth.getUser().then(async ({ data }) => {
-      setUser(data?.user);
-      if (data?.user) {
-        const fetchedListings = await getUserListings(data.user.id);
-        setListings(fetchedListings);
-      }
-    });
-  }, []);
+    if (!user) return;
+    const fetchListings = async () => {
+      const fetched = await getUserListings(user.id);
+      setListings(fetched);
+    };
+    fetchListings();
+  }, [user]);
 
   const handleSubmit = async (e: any) => {
     e.preventDefault();
-
     if (!file || !user) {
       setError('Please upload a file and make sure you are logged in.');
       return;
@@ -50,16 +49,14 @@ export default function Dashboard() {
       return;
     }
 
-    const { error: insertError } = await supabase.from('listings').insert([
-      {
-        user_id: user.id,
-        title,
-        description,
-        price: parseFloat(price),
-        tags: tags.split(',').map((t) => t.trim()),
-        file_path: fileName,
-      },
-    ]);
+    const { error: insertError } = await supabase.from('listings').insert([{
+      user_id: user.id,
+      title,
+      description,
+      price: parseFloat(price),
+      tags: tags.split(',').map((t) => t.trim()),
+      file_path: fileName,
+    }]);
 
     if (insertError) {
       console.error('Insert error:', insertError);
@@ -95,89 +92,61 @@ export default function Dashboard() {
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
-      <Head>
-        <title>Seller Dashboard – Sovrn</title>
-      </Head>
+      <Head><title>Seller Dashboard – Sovrn</title></Head>
 
       <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
-      {user && (
-        <a
-          href="/purchases"
-          className="inline-block text-blue-400 underline text-sm mb-6 hover:text-blue-300"
-        >
+
+      {!authLoading && user && (
+        <a href="/purchases" className="inline-block text-blue-400 underline text-sm mb-6 hover:text-blue-300">
           → View Your Purchases
         </a>
       )}
 
-      {!user ? (
+      {authLoading ? (
+        <p>Loading...</p>
+      ) : !user ? (
         <p className="text-red-400">You must be logged in to create listings.</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
+          {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md">
             <h2 className="text-xl font-semibold mb-4">Create New Listing</h2>
 
             <div>
               <label className="block text-sm mb-1">Title</label>
-              <input
-                type="text"
-                placeholder="Title"
-                className="w-full p-2 rounded bg-gray-800"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                required
-              />
+              <input type="text" className="w-full p-2 rounded bg-gray-800" value={title}
+                onChange={(e) => setTitle(e.target.value)} required />
             </div>
 
             <div>
               <label className="block text-sm mb-1">Description</label>
-              <textarea
-                placeholder="Description"
-                className="w-full p-2 rounded bg-gray-800"
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-              />
+              <textarea className="w-full p-2 rounded bg-gray-800" value={description}
+                onChange={(e) => setDescription(e.target.value)} />
             </div>
 
             <div>
               <label className="block text-sm mb-1">Tags (comma-separated)</label>
-              <input
-                type="text"
-                placeholder="e.g. finance, location, health"
-                className="w-full p-2 rounded bg-gray-800"
-                value={tags}
-                onChange={(e) => setTags(e.target.value)}
-              />
+              <input type="text" className="w-full p-2 rounded bg-gray-800" value={tags}
+                onChange={(e) => setTags(e.target.value)} />
             </div>
 
             <div>
               <label className="block text-sm mb-1">Price (USD)</label>
-              <input
-                type="number"
-                placeholder="Price"
-                className="w-full p-2 rounded bg-gray-800"
-                value={price}
-                onChange={(e) => setPrice(e.target.value)}
-                required
-              />
+              <input type="number" className="w-full p-2 rounded bg-gray-800" value={price}
+                onChange={(e) => setPrice(e.target.value)} required />
             </div>
 
             <div>
               <label className="block text-sm mb-1">Upload File</label>
-              <input
-                type="file"
-                className="w-full p-2 rounded bg-gray-800"
-                onChange={(e) => setFile(e.target.files?.[0] || null)}
-                required
-              />
+              <input type="file" className="w-full p-2 rounded bg-gray-800"
+                onChange={(e) => setFile(e.target.files?.[0] || null)} required />
             </div>
 
-            <button type="submit" className="bg-blue-600 py-2 px-4 rounded w-full">
-              Submit Listing
-            </button>
-
+            <button type="submit" className="bg-blue-600 py-2 px-4 rounded w-full">Submit Listing</button>
             {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           </form>
 
+          {/* LISTINGS */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Listings</h2>
             {listings.length === 0 ? (
@@ -190,12 +159,8 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">{listing.description}</p>
                     <p className="text-sm text-gray-300">${listing.price.toFixed(2)}</p>
                     <p className="text-sm text-gray-400">Tags: {listing.tags.join(', ')}</p>
-                    <button
-                      onClick={() => handlePreview(listing.file_path)}
-                      className="mt-2 text-blue-400 underline text-sm"
-                    >
-                      Preview Data
-                    </button>
+                    <button onClick={() => handlePreview(listing.file_path)}
+                      className="mt-2 text-blue-400 underline text-sm">Preview Data</button>
                   </li>
                 ))}
               </ul>
@@ -204,6 +169,7 @@ export default function Dashboard() {
         </div>
       )}
 
+      {/* MODAL */}
       {showModal && previewData && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-6 rounded shadow-lg max-w-md w-full">
@@ -212,12 +178,8 @@ export default function Dashboard() {
             <p className="text-sm mb-1">Columns: {previewData.columns}</p>
             <p className="text-sm mb-1">Rows: {previewData.rows}</p>
             <p className="text-sm mb-2">Headers: {previewData.headers.join(', ')}</p>
-            <button
-              onClick={() => setShowModal(false)}
-              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mt-4"
-            >
-              Close
-            </button>
+            <button onClick={() => setShowModal(false)}
+              className="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded mt-4">Close</button>
           </div>
         </div>
       )}
