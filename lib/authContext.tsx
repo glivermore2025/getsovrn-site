@@ -16,10 +16,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Subscribe to auth changes
-    const { data: listener } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      const { data: { user } } = await supabase.auth.getUser();
-      setUser(user ?? null);
-    });
+const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+  setUser(session?.user ?? null); // ✅ use session directly
+});
+
 
     return () => {
       listener.subscription.unsubscribe();
