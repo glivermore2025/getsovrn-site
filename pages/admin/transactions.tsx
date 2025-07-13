@@ -16,13 +16,28 @@ export default function AdminTransactions() {
     fetchTransactions();
   }, []);
 
-  const fetchTransactions = async () => {
-    const { data } = await supabase
+   const fetchTransactions = async () => {
+    const { data, error } = await supabase
       .from('transactions')
-      .select('*')
-      .order('created_at', { ascending: false });
-    if (data) setTransactions(data);
+      .select(`
+        id,
+        listing_id,
+        buyer_id,
+        purchase_price,
+        purchased_at,
+        listings (title),
+        profiles (email)
+      `)
+      .order('purchased_at', { ascending: false });
+
+        if (error) {
+      console.error('Error fetching transactions:', error);
+    } else {
+      setTransactions(data);
+    }
   };
+
+  fetchTransactions();
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
