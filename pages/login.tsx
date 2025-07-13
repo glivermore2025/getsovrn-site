@@ -1,31 +1,34 @@
+// pages/login.tsx
 import { useState } from 'react';
 import Head from 'next/head';
-import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
+import { useAuth } from '../lib/authContext';
+import Link from 'next/link';
 
 export default function Login() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
-
-  const redirectTo = router.query.redirectTo as string | undefined;
-  console.log("Redirect query param:", redirectTo);
+  const { user } = useAuth();
 
   const handleLogin = async () => {
-    const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-    console.log("Login response:", { data, error });
+    setError('');
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
 
     if (error) {
       setError(error.message);
-    } else if (!data.session) {
-      setError('Login failed: no session returned.');
     } else {
-      const path = redirectTo || '/dashboard';
-      router.replace(router.query.redirectTo?.toString() || '/dashboard');
+      router.push('/dashboard'); // Or use router.query.redirectTo || '/dashboard'
     }
   };
+
+  // If user is already logged in, redirect
+  if (user) {
+    router.push('/dashboard');
+    return null;
+  }
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8 max-w-sm mx-auto">
