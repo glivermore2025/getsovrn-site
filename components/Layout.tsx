@@ -1,16 +1,16 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
 import { supabase } from '../lib/supabaseClient';
-import { useAuth } from '../lib/authContext'; // ✅ import useAuth
+import { useAuth } from '../lib/authContext'; // ✅ context-based user
 import { ADMIN_USER_IDS } from '../lib/constants';
 
 export default function Layout({ children }: { children: React.ReactNode }) {
-  const { user } = useAuth(); // ✅ context-based user
+  const { user } = useAuth(); // ✅ use global auth context
   const router = useRouter();
 
   const handleLogout = async () => {
-    await supabase.auth.signOut();
-    router.push('/');
+    await supabase.auth.signOut(); // ✅ triggers auth state change
+    router.push('/'); // optional redirect after logout
   };
 
   return (
@@ -29,7 +29,12 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               {ADMIN_USER_IDS.includes(user.id) && (
                 <Link href="/admin" className="bg-yellow-600 hover:bg-yellow-700 py-1 px-4 rounded">Admin</Link>
               )}
-              <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 py-1 px-4 rounded">Logout</button>
+              <button
+                onClick={handleLogout}
+                className="bg-red-600 hover:bg-red-700 py-1 px-4 rounded"
+              >
+                Logout
+              </button>
             </div>
           ) : (
             <>
