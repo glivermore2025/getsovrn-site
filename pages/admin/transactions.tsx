@@ -30,6 +30,8 @@ export default function AdminTransactions() {
       `)
       .order('purchased_at', { ascending: false });
 
+     console.log('Fetched transactions:', data);
+
         if (error) {
       console.error('Error fetching transactions:', error);
     } else {
