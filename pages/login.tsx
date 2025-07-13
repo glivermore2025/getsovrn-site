@@ -23,7 +23,7 @@ export default function Login() {
       setError('Login failed: no session returned.');
     } else {
       const path = redirectTo || '/dashboard';
-      router.push(path);
+      router.replace(router.query.redirectTo?.toString() || '/dashboard');
     }
   };
 
