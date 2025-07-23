@@ -1,3 +1,4 @@
+// ... keep existing imports
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
@@ -90,6 +91,25 @@ export default function Dashboard() {
     setShowModal(true);
   };
 
+  const handleDelete = async (listingId: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
+
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', listingId)
+      .eq('user_id', user.id); // double-check user owns it
+
+    if (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete listing.');
+      return;
+    }
+
+    const updated = await getUserListings(user.id);
+    setListings(updated);
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head><title>Seller Dashboard – Sovrn</title></Head>
@@ -159,8 +179,12 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">{listing.description}</p>
                     <p className="text-sm text-gray-300">${listing.price.toFixed(2)}</p>
                     <p className="text-sm text-gray-400">Tags: {listing.tags.join(', ')}</p>
-                    <button onClick={() => handlePreview(listing.file_path)}
-                      className="mt-2 text-blue-400 underline text-sm">Preview Data</button>
+                    <div className="flex gap-4 mt-2">
+                      <button onClick={() => handlePreview(listing.file_path)}
+                        className="text-blue-400 underline text-sm">Preview Data</button>
+                      <button onClick={() => handleDelete(listing.id)}
+                        className="text-red-400 underline text-sm">Delete Listing</button>
+                    </div>
                   </li>
                 ))}
               </ul>
