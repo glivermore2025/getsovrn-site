@@ -91,32 +91,58 @@ export default function Dashboard() {
   };
 
   const handleDelete = async (listingId: string, filePath: string) => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
+  if (!confirm('Are you sure you want to delete this listing?')) return;
 
-    const { error: deleteError } = await supabase
-      .from('listings')
-      .delete()
-      .eq('id', listingId)
-      .eq('user_id', user.id);
+  // 1. Check for purchases
+  const { data: purchases, error: purchaseError } = await supabase
+    .from('purchases')
+    .select('id')
+    .eq('listing_id', listingId);
 
-    if (deleteError) {
-      console.error('Delete error:', deleteError);
-      alert('Failed to delete listing.');
-      return;
-    }
+  if (purchaseError) {
+    console.error('Error checking purchases:', purchaseError);
+    alert('Failed to verify purchases. Try again.');
+    return;
+  }
 
-    const { error: storageError } = await supabase
-      .storage
-      .from('datasets')
-      .remove([filePath]);
+  if (purchases && purchases.length > 0) {
+    alert('This listing cannot be deleted because it has already been purchased.');
+    return;
+  }
 
-    if (storageError) {
-      console.warn(`Listing deleted but failed to remove file (${filePath}) from storage:`, storageError);
-    }
+  // 2. Delete listing (no purchases)
+  const { error } = await supabase
+    .from('listings')
+    .delete()
+    .eq('id', listingId)
+    .eq('user_id', user.id);
 
-    const updated = await getUserListings(user.id);
-    setListings(updated);
-  };
+  if (error) {
+    console.error('Delete error:', error);
+    alert('Failed to delete listing.');
+    return;
+  }
+
+  // 3. Delete file from storage
+  const { error: fileError } = await supabase.storage
+    .from('datasets')
+    .remove([filePath]);
+
+  if (fileError) {
+    console.warn(`File not removed from storage: ${fileError.message}`);
+  }
+
+  const updated = await getUserListings(user.id);
+  setListings(updated);
+
+  alert('Listing deleted.');
+};
+<button
+  onClick={() => handleDelete(listing.id, listing.file_path)}
+  className="text-red-400 underline text-sm"
+>
+  Delete Listing
+</button>
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
@@ -188,8 +214,12 @@ export default function Dashboard() {
                     <div className="flex gap-4 mt-2">
                       <button onClick={() => handlePreview(listing.file_path)}
                         className="text-blue-400 underline text-sm">Preview Data</button>
-                      <button onClick={() => handleDelete(listing.id, listing.file_path)}
-                        className="text-red-400 underline text-sm">Delete Listing</button>
+                      <button
+                        onClick={() => handleDelete(listing.id, listing.file_path)}
+                        className="text-red-400 underline text-sm"
+                        >
+                          Delete Listing
+                        </button>
                     </div>
                   </li>
                 ))}
