@@ -214,12 +214,12 @@ export default function Dashboard() {
                     <div className="flex gap-4 mt-2">
                       <button onClick={() => handlePreview(listing.file_path)}
                         className="text-blue-400 underline text-sm">Preview Data</button>
-                      <button
-                        onClick={() => handleDelete(listing.id, listing.file_path)}
-                        className="text-red-400 underline text-sm"
-                        >
-                          Delete Listing
-                        </button>
+<button
+  onClick={() => handleDelete(listing.id, listing.file_path)}
+  className="text-red-400 underline text-sm"
+>
+  Delete Listing
+</button>
                     </div>
                   </li>
                 ))}
