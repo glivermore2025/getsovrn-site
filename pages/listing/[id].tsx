@@ -64,33 +64,50 @@ export default function ListingDetails() {
   };
 
   const handleDelete = async () => {
-    if (!confirm('Are you sure you want to delete this listing?')) return;
+  if (!confirm('Are you sure you want to delete this listing?')) return;
 
-    // Delete record
-    const { error } = await supabase
-      .from('listings')
-      .delete()
-      .eq('id', listing.id)
-      .eq('user_id', user.id);
+  // 1. Check if there are purchases for this listing
+  const { data: purchases, error: purchaseError } = await supabase
+    .from('purchases')
+    .select('id')
+    .eq('listing_id', listing.id);
 
-    if (error) {
-      console.error('Delete error:', error);
-      alert('Failed to delete listing.');
-      return;
-    }
+  if (purchaseError) {
+    console.error('Error checking purchases:', purchaseError);
+    alert('Failed to verify purchases. Try again.');
+    return;
+  }
 
-    // Delete file
-    const { error: fileError } = await supabase.storage
-      .from('datasets')
-      .remove([listing.file_path]);
+  if (purchases && purchases.length > 0) {
+    alert('This listing cannot be deleted because it has already been purchased.');
+    return;
+  }
 
-    if (fileError) {
-      console.warn(`File not removed from storage: ${fileError.message}`);
-    }
+  // 2. Delete the record (only if no purchases exist)
+  const { error } = await supabase
+    .from('listings')
+    .delete()
+    .eq('id', listing.id)
+    .eq('user_id', user.id);
 
-    alert('Listing deleted.');
-    router.push('/dashboard');
-  };
+  if (error) {
+    console.error('Delete error:', error);
+    alert('Failed to delete listing.');
+    return;
+  }
+
+  // 3. Remove file from storage
+  const { error: fileError } = await supabase.storage
+    .from('datasets')
+    .remove([listing.file_path]);
+
+  if (fileError) {
+    console.warn(`File not removed from storage: ${fileError.message}`);
+  }
+
+  alert('Listing deleted.');
+  router.push('/dashboard');
+};
 
   if (loading) return <div className="p-8 text-white">Loading...</div>;
   if (!listing) return <div className="p-8 text-white">Listing not found.</div>;
