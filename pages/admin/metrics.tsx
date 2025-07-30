@@ -1,4 +1,3 @@
-// /pages/admin/metrics.tsx
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import { ADMIN_USER_IDS } from '../../lib/constants';
@@ -16,6 +15,10 @@ import {
 export default function AdminMetrics() {
   const [user, setUser] = useState<any>(null);
   const [metrics, setMetrics] = useState<any>({});
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const pageSize = 10;
   const router = useRouter();
 
   useEffect(() => {
@@ -37,13 +40,27 @@ export default function AdminMetrics() {
         supabase.from('profiles').select('*'),
       ]);
 
-    const revenue = transactions?.reduce(
+    let filteredTransactions = transactions || [];
+
+    // Apply date filtering
+    if (startDate) {
+      filteredTransactions = filteredTransactions.filter(
+        (t) => new Date(t.purchased_at) >= new Date(startDate)
+      );
+    }
+    if (endDate) {
+      filteredTransactions = filteredTransactions.filter(
+        (t) => new Date(t.purchased_at) <= new Date(endDate)
+      );
+    }
+
+    const revenue = filteredTransactions.reduce(
       (sum, t) => sum + (t.purchase_price || 0),
       0
     );
 
     const revenueByDay: Record<string, number> = {};
-    transactions?.forEach((t) => {
+    filteredTransactions.forEach((t) => {
       const date = new Date(t.purchased_at).toISOString().split('T')[0];
       revenueByDay[date] = (revenueByDay[date] || 0) + (t.purchase_price || 0);
     });
@@ -53,18 +70,75 @@ export default function AdminMetrics() {
       amount,
     }));
 
+    // Aggregate top-selling listings
+    const topListingsMap: Record<string, number> = {};
+    filteredTransactions.forEach((t) => {
+      topListingsMap[t.listing_id] =
+        (topListingsMap[t.listing_id] || 0) + (t.purchase_price || 0);
+    });
+    const topListings = Object.entries(topListingsMap)
+      .map(([listing_id, revenue]) => ({ listing_id, revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
+    // Aggregate top sellers
+    const topSellersMap: Record<string, number> = {};
+    filteredTransactions.forEach((t) => {
+      topSellersMap[t.buyer_id] =
+        (topSellersMap[t.buyer_id] || 0) + (t.purchase_price || 0);
+    });
+    const topSellers = Object.entries(topSellersMap)
+      .map(([buyer_id, revenue]) => ({ buyer_id, revenue }))
+      .sort((a, b) => b.revenue - a.revenue)
+      .slice(0, 5);
+
     setMetrics({
       totalListings: listings?.length || 0,
-      totalRevenue: revenue?.toFixed(2),
+      totalRevenue: revenue.toFixed(2),
       totalUsers: users?.length || 0,
       chartData,
-      recentTransactions: transactions || [],
+      recentTransactions: filteredTransactions,
+      topListings,
+      topSellers,
     });
+    setCurrentPage(1); // Reset pagination on new fetch
   };
+
+  const paginatedTransactions = metrics.recentTransactions
+    ? metrics.recentTransactions.slice((currentPage - 1) * pageSize, currentPage * pageSize)
+    : [];
 
   return (
     <div className="text-white p-8 bg-gray-950 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Metrics Dashboard</h1>
+
+      {/* Filters */}
+      <div className="bg-gray-800 p-4 rounded mb-8 flex gap-4 items-end">
+        <div>
+          <label className="block text-sm mb-1">Start Date</label>
+          <input
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            className="bg-gray-900 p-2 rounded"
+          />
+        </div>
+        <div>
+          <label className="block text-sm mb-1">End Date</label>
+          <input
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            className="bg-gray-900 p-2 rounded"
+          />
+        </div>
+        <button
+          onClick={fetchMetrics}
+          className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
+        >
+          Apply Filters
+        </button>
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-gray-800 p-6 rounded">
@@ -90,14 +164,33 @@ export default function AdminMetrics() {
             <XAxis dataKey="date" />
             <YAxis />
             <Tooltip />
-            <Line
-              type="monotone"
-              dataKey="amount"
-              stroke="#38bdf8"
-              strokeWidth={2}
-            />
+            <Line type="monotone" dataKey="amount" stroke="#38bdf8" strokeWidth={2} />
           </LineChart>
         </ResponsiveContainer>
+      </div>
+
+      {/* Top Selling Listings */}
+      <div className="bg-gray-800 p-6 rounded mt-10">
+        <h2 className="text-lg font-semibold mb-4">Top Selling Listings</h2>
+        <ul>
+          {metrics.topListings?.map((l: any, i: number) => (
+            <li key={i} className="mb-2">
+              {l.listing_id}: ${l.revenue.toFixed(2)}
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Top Sellers */}
+      <div className="bg-gray-800 p-6 rounded mt-10">
+        <h2 className="text-lg font-semibold mb-4">Top Sellers</h2>
+        <ul>
+          {metrics.topSellers?.map((s: any, i: number) => (
+            <li key={i} className="mb-2">
+              {s.buyer_id}: ${s.revenue.toFixed(2)}
+            </li>
+          ))}
+        </ul>
       </div>
 
       {/* Recent Transactions */}
@@ -113,27 +206,38 @@ export default function AdminMetrics() {
             </tr>
           </thead>
           <tbody>
-            {metrics.recentTransactions?.slice(0, 10).map((tx: any, i: number) => (
+            {paginatedTransactions.map((tx: any, i: number) => (
               <tr key={i} className="border-b border-gray-700">
                 <td className="p-2">{tx.buyer_id}</td>
                 <td className="p-2">{tx.listing_id}</td>
                 <td className="p-2">${tx.purchase_price?.toFixed(2)}</td>
-                <td className="p-2">
-                  {new Date(tx.purchased_at).toLocaleDateString()}
-                </td>
+                <td className="p-2">{new Date(tx.purchased_at).toLocaleDateString()}</td>
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
 
-      {/* 
-        Future Enhancements:
-        1. Add a date range filter (startDate, endDate) to refine metrics.
-        2. Add pagination for recent transactions (next/prev page buttons).
-        3. Add "Top Selling Listings" section using aggregation on transactions.
-        4. Add "Active Sellers" ranking by revenue generated.
-      */}
+        {/* Pagination Controls */}
+        {metrics.recentTransactions?.length > pageSize && (
+          <div className="mt-4 flex justify-between">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage((p) => p - 1)}
+              className="bg-gray-700 px-3 py-1 rounded disabled:opacity-50"
+            >
+              Previous
+            </button>
+            <span>Page {currentPage}</span>
+            <button
+              disabled={currentPage * pageSize >= metrics.recentTransactions.length}
+              onClick={() => setCurrentPage((p) => p + 1)}
+              className="bg-gray-700 px-3 py-1 rounded disabled:opacity-50"
+            >
+              Next
+            </button>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
