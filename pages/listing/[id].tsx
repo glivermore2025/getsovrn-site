@@ -4,10 +4,12 @@ import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import Papa from 'papaparse';
 import axios from 'axios';
+import { useAuth } from '../../lib/authContext'; // Added
 
 export default function ListingDetails() {
   const router = useRouter();
   const { id } = router.query;
+  const { user } = useAuth(); // Added
 
   const [listing, setListing] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -49,20 +51,46 @@ export default function ListingDetails() {
   };
 
   const handleBuyNow = async () => {
-  try {
-    setBuying(true);
-    const res = await axios.post('/api/checkout_sessions', { listingId: listing.id });
+    try {
+      setBuying(true);
+      const res = await axios.post('/api/checkout_sessions', { listingId: listing.id });
+      window.location.href = res.data.url;
+    } catch (err) {
+      alert('Failed to initiate checkout.');
+      console.error(err);
+    } finally {
+      setBuying(false);
+    }
+  };
 
-    // Redirect using the session's URL returned from Stripe
-    window.location.href = res.data.url;
-  } catch (err) {
-    alert('Failed to initiate checkout.');
-    console.error(err);
-  } finally {
-    setBuying(false);
-  }
-};
+  const handleDelete = async () => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
 
+    // Delete record
+    const { error } = await supabase
+      .from('listings')
+      .delete()
+      .eq('id', listing.id)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Delete error:', error);
+      alert('Failed to delete listing.');
+      return;
+    }
+
+    // Delete file
+    const { error: fileError } = await supabase.storage
+      .from('datasets')
+      .remove([listing.file_path]);
+
+    if (fileError) {
+      console.warn(`File not removed from storage: ${fileError.message}`);
+    }
+
+    alert('Listing deleted.');
+    router.push('/dashboard');
+  };
 
   if (loading) return <div className="p-8 text-white">Loading...</div>;
   if (!listing) return <div className="p-8 text-white">Listing not found.</div>;
@@ -92,6 +120,15 @@ export default function ListingDetails() {
         >
           {buying ? 'Processing...' : 'Buy Now'}
         </button>
+
+        {user && user.id === listing.user_id && (
+          <button
+            onClick={handleDelete}
+            className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded"
+          >
+            Delete Listing
+          </button>
+        )}
       </div>
 
       {showModal && previewData && (
