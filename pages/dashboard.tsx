@@ -1,14 +1,13 @@
-// ... keep existing imports
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import Papa from 'papaparse';
 import { getUserListings } from '../utils/fetchListings';
-import { useAuth } from '../lib/authContext'; // ✅ import the context
+import { useAuth } from '../lib/authContext';
 
 export default function Dashboard() {
-  const { user, loading: authLoading } = useAuth(); // ✅ useAuth hook
+  const { user, loading: authLoading } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -91,19 +90,28 @@ export default function Dashboard() {
     setShowModal(true);
   };
 
-  const handleDelete = async (listingId: string) => {
+  const handleDelete = async (listingId: string, filePath: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return;
 
-    const { error } = await supabase
+    const { error: deleteError } = await supabase
       .from('listings')
       .delete()
       .eq('id', listingId)
-      .eq('user_id', user.id); // double-check user owns it
+      .eq('user_id', user.id);
 
-    if (error) {
-      console.error('Delete error:', error);
+    if (deleteError) {
+      console.error('Delete error:', deleteError);
       alert('Failed to delete listing.');
       return;
+    }
+
+    const { error: storageError } = await supabase
+      .storage
+      .from('datasets')
+      .remove([filePath]);
+
+    if (storageError) {
+      console.warn(`Listing deleted but failed to remove file (${filePath}) from storage:`, storageError);
     }
 
     const updated = await getUserListings(user.id);
@@ -128,7 +136,6 @@ export default function Dashboard() {
         <p className="text-red-400">You must be logged in to create listings.</p>
       ) : (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
-          {/* FORM */}
           <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md">
             <h2 className="text-xl font-semibold mb-4">Create New Listing</h2>
 
@@ -166,7 +173,6 @@ export default function Dashboard() {
             {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           </form>
 
-          {/* LISTINGS */}
           <div>
             <h2 className="text-xl font-semibold mb-4">Your Listings</h2>
             {listings.length === 0 ? (
@@ -182,7 +188,7 @@ export default function Dashboard() {
                     <div className="flex gap-4 mt-2">
                       <button onClick={() => handlePreview(listing.file_path)}
                         className="text-blue-400 underline text-sm">Preview Data</button>
-                      <button onClick={() => handleDelete(listing.id)}
+                      <button onClick={() => handleDelete(listing.id, listing.file_path)}
                         className="text-red-400 underline text-sm">Delete Listing</button>
                     </div>
                   </li>
@@ -193,7 +199,6 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* MODAL */}
       {showModal && previewData && (
         <div className="fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50">
           <div className="bg-gray-900 p-6 rounded shadow-lg max-w-md w-full">
