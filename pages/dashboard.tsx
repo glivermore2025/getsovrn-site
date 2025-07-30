@@ -90,27 +90,30 @@ export default function Dashboard() {
     setShowModal(true);
   };
 
-  const handleDelete = async (listingId: string, filePath: string) => {
+ const handleDelete = async (listingId: string, filePath: string) => {
   if (!confirm('Are you sure you want to delete this listing?')) return;
 
-  // 1. Check for purchases
-  const { data: purchases, error: purchaseError } = await supabase
+  // Check if there are any purchases linked to this listing
+  const { data: purchases, error: checkError } = await supabase
     .from('purchases')
     .select('id')
     .eq('listing_id', listingId);
 
-  if (purchaseError) {
-    console.error('Error checking purchases:', purchaseError);
-    alert('Failed to verify purchases. Try again.');
+  if (checkError) {
+    console.error('Error checking purchases:', checkError);
+    alert('Failed to verify purchases.');
     return;
   }
 
   if (purchases && purchases.length > 0) {
-    alert('This listing cannot be deleted because it has already been purchased.');
+    alert('This listing cannot be deleted because purchases exist.');
     return;
   }
 
-  // 2. Delete listing (no purchases)
+  // Safe to delete the file from storage
+  await supabase.storage.from('datasets').remove([filePath]);
+
+  // Delete listing record
   const { error } = await supabase
     .from('listings')
     .delete()
@@ -123,26 +126,10 @@ export default function Dashboard() {
     return;
   }
 
-  // 3. Delete file from storage
-  const { error: fileError } = await supabase.storage
-    .from('datasets')
-    .remove([filePath]);
-
-  if (fileError) {
-    console.warn(`File not removed from storage: ${fileError.message}`);
-  }
-
   const updated = await getUserListings(user.id);
   setListings(updated);
-
-  alert('Listing deleted.');
 };
-<button
-  onClick={() => handleDelete(listing.id, listing.file_path)}
-  className="text-red-400 underline text-sm"
->
-  Delete Listing
-</button>
+
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
