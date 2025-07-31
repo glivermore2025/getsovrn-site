@@ -188,7 +188,6 @@ export default function Marketplace() {
 
       {activeTab === 'sell' && (
         <>
-          {/* Button to create new buyer post */}
           <div className="flex justify-center mb-8">
             <Link
               href="/buyer_posts/new"
