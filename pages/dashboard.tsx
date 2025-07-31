@@ -8,16 +8,20 @@ import { useAuth } from '../lib/authContext';
 
 export default function Dashboard() {
   const { user, loading: authLoading } = useAuth();
+  const [activeTab, setActiveTab] = useState<'seller' | 'buyer'>('seller');
+
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [tags, setTags] = useState('');
   const [file, setFile] = useState<File | null>(null);
   const [listings, setListings] = useState<any[]>([]);
+  const [buyerOptIns, setBuyerOptIns] = useState<any[]>([]);
   const [error, setError] = useState('');
   const [previewData, setPreviewData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
 
+  // Fetch seller listings
   useEffect(() => {
     if (!user) return;
     const fetchListings = async () => {
@@ -25,6 +29,29 @@ export default function Dashboard() {
       setListings(fetched);
     };
     fetchListings();
+  }, [user]);
+
+  // Fetch buyer post opt-ins
+  useEffect(() => {
+    if (!user) return;
+    const fetchOptIns = async () => {
+      const { data, error } = await supabase
+        .from('buyer_post_optins')
+        .select(`
+          buyer_post_id,
+          buyer_posts ( title, description, budget, tags )
+        `)
+        .eq('user_id', user.id);
+
+      if (!error && data) {
+        const cleaned = data.map((optin: any) => ({
+          id: optin.buyer_post_id,
+          ...optin.buyer_posts,
+        }));
+        setBuyerOptIns(cleaned);
+      }
+    };
+    fetchOptIns();
   }, [user]);
 
   const handleSubmit = async (e: any) => {
@@ -39,9 +66,7 @@ export default function Dashboard() {
 
     const { error: uploadError } = await supabase.storage
       .from('datasets')
-      .upload(fileName, file, {
-        contentType: file.type,
-      });
+      .upload(fileName, file, { contentType: file.type });
 
     if (uploadError) {
       console.error('Upload error:', uploadError);
@@ -90,64 +115,62 @@ export default function Dashboard() {
     setShowModal(true);
   };
 
- const handleDelete = async (listingId: string, filePath: string) => {
-  if (!confirm('Are you sure you want to delete this listing?')) return;
+  const handleDelete = async (listingId: string, filePath: string) => {
+    if (!confirm('Are you sure you want to delete this listing?')) return;
 
-  // Check if there are any purchases linked to this listing
-  const { data: purchases, error: checkError } = await supabase
-    .from('purchases')
-    .select('id')
-    .eq('listing_id', listingId);
+    // Check purchases
+    const { data: purchases } = await supabase
+      .from('purchases')
+      .select('id')
+      .eq('listing_id', listingId);
 
-  if (checkError) {
-    console.error('Error checking purchases:', checkError);
-    alert('Failed to verify purchases.');
-    return;
-  }
+    if (purchases && purchases.length > 0) {
+      alert('This listing cannot be deleted because purchases exist.');
+      return;
+    }
 
-  if (purchases && purchases.length > 0) {
-    alert('This listing cannot be deleted because purchases exist.');
-    return;
-  }
+    // Remove file
+    await supabase.storage.from('datasets').remove([filePath]);
 
-  // Safe to delete the file from storage
-  await supabase.storage.from('datasets').remove([filePath]);
+    // Delete listing
+    await supabase
+      .from('listings')
+      .delete()
+      .eq('id', listingId)
+      .eq('user_id', user.id);
 
-  // Delete listing record
-  const { error } = await supabase
-    .from('listings')
-    .delete()
-    .eq('id', listingId)
-    .eq('user_id', user.id);
-
-  if (error) {
-    console.error('Delete error:', error);
-    alert('Failed to delete listing.');
-    return;
-  }
-
-  const updated = await getUserListings(user.id);
-  setListings(updated);
-};
-
+    const updated = await getUserListings(user.id);
+    setListings(updated);
+  };
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
-      <Head><title>Seller Dashboard – Sovrn</title></Head>
+      <Head><title>Dashboard – Sovrn</title></Head>
 
-      <h1 className="text-3xl font-bold mb-2">Seller Dashboard</h1>
+      <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
 
-      {!authLoading && user && (
-        <a href="/purchases" className="inline-block text-blue-400 underline text-sm mb-6 hover:text-blue-300">
-          → View Your Purchases
-        </a>
-      )}
+      {/* Tabs */}
+      <div className="flex mb-8 space-x-4">
+        <button
+          onClick={() => setActiveTab('seller')}
+          className={`px-4 py-2 rounded ${activeTab === 'seller' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+        >
+          Seller
+        </button>
+        <button
+          onClick={() => setActiveTab('buyer')}
+          className={`px-4 py-2 rounded ${activeTab === 'buyer' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+        >
+          Buyer
+        </button>
+      </div>
 
       {authLoading ? (
         <p>Loading...</p>
       ) : !user ? (
-        <p className="text-red-400">You must be logged in to create listings.</p>
-      ) : (
+        <p className="text-red-400">You must be logged in to view the dashboard.</p>
+      ) : activeTab === 'seller' ? (
+        // SELLER TAB
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md">
             <h2 className="text-xl font-semibold mb-4">Create New Listing</h2>
@@ -200,19 +223,34 @@ export default function Dashboard() {
                     <p className="text-sm text-gray-400">Tags: {listing.tags.join(', ')}</p>
                     <div className="flex gap-4 mt-2">
                       <button onClick={() => handlePreview(listing.file_path)}
-                        className="text-blue-400 underline text-sm">Preview Data</button>
-<button
-  onClick={() => handleDelete(listing.id, listing.file_path)}
-  className="text-red-400 underline text-sm"
->
-  Delete Listing
-</button>
+                        className="text-blue-400 underline text-sm">Preview</button>
+                      <button onClick={() => handleDelete(listing.id, listing.file_path)}
+                        className="text-red-400 underline text-sm">Delete</button>
                     </div>
                   </li>
                 ))}
               </ul>
             )}
           </div>
+        </div>
+      ) : (
+        // BUYER TAB
+        <div>
+          <h2 className="text-xl font-semibold mb-4">Buyer Post Opt-ins</h2>
+          {buyerOptIns.length === 0 ? (
+            <p>No buyer posts opted into yet.</p>
+          ) : (
+            <ul className="space-y-4">
+              {buyerOptIns.map((post) => (
+                <li key={post.id} className="bg-gray-800 p-4 rounded">
+                  <h3 className="text-lg font-semibold">{post.title}</h3>
+                  <p className="text-sm text-gray-400">{post.description}</p>
+                  <p className="text-sm text-gray-300">Budget: ${post.budget.toFixed(2)}</p>
+                  <p className="text-sm text-gray-400">Tags: {post.tags?.join(', ')}</p>
+                </li>
+              ))}
+            </ul>
+          )}
         </div>
       )}
 
