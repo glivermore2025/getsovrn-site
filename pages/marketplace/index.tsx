@@ -13,6 +13,7 @@ export default function Marketplace() {
   const [sort, setSort] = useState('newest');
   const [filtered, setFiltered] = useState<any[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
+  const [optInLoading, setOptInLoading] = useState<string | null>(null);
 
   useEffect(() => {
     fetchListings();
@@ -87,6 +88,48 @@ export default function Marketplace() {
       alert('Failed to initiate payment.');
     } finally {
       setLoading(null);
+    }
+  };
+
+  const handleOptIn = async (postId: string) => {
+    setOptInLoading(postId);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        alert('You must be logged in to opt in.');
+        return;
+      }
+
+      // Check if already opted in
+      const { data: existing } = await supabase
+        .from('buyer_post_optins')
+        .select('id')
+        .eq('buyer_post_id', postId)
+        .eq('user_id', user.id);
+
+      if (existing && existing.length > 0) {
+        alert('You have already opted in to this request.');
+        return;
+      }
+
+      const { error } = await supabase.from('buyer_post_optins').insert([
+        {
+          buyer_post_id: postId,
+          user_id: user.id,
+        },
+      ]);
+
+      if (error) {
+        console.error('Error opting in:', error);
+        alert('Failed to opt-in.');
+      } else {
+        alert('Successfully opted in! The buyer will review your data.');
+      }
+    } catch (err) {
+      console.error('Error during opt-in:', err);
+      alert('An error occurred while opting in.');
+    } finally {
+      setOptInLoading(null);
     }
   };
 
@@ -218,6 +261,13 @@ export default function Marketplace() {
                         View Details
                       </span>
                     </Link>
+                    <button
+                      onClick={() => handleOptIn(post.id)}
+                      disabled={optInLoading === post.id}
+                      className="flex-1 text-center bg-green-600 hover:bg-green-700 px-4 py-2 rounded-lg text-sm font-medium"
+                    >
+                      {optInLoading === post.id ? 'Opting in...' : 'Opt-in'}
+                    </button>
                   </div>
                 </div>
               ))}
