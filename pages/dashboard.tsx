@@ -17,6 +17,7 @@ export default function Dashboard() {
   const [file, setFile] = useState<File | null>(null);
   const [listings, setListings] = useState<any[]>([]);
   const [buyerOptIns, setBuyerOptIns] = useState<any[]>([]);
+  const [myBuyerPosts, setMyBuyerPosts] = useState<any[]>([]);
   const [error, setError] = useState('');
   const [previewData, setPreviewData] = useState<any>(null);
   const [showModal, setShowModal] = useState(false);
@@ -31,7 +32,7 @@ export default function Dashboard() {
     fetchListings();
   }, [user]);
 
-  // Fetch buyer post opt-ins
+  // Fetch buyer post opt-ins (posts this user has opted into)
   useEffect(() => {
     if (!user) return;
     const fetchOptIns = async () => {
@@ -39,12 +40,7 @@ export default function Dashboard() {
         .from('buyer_post_optins')
         .select(`
           buyer_post_id,
-          buyer_posts (
-            title,
-            description,
-            budget,
-            tags
-          )
+          buyer_posts ( title, description, budget, tags )
         `)
         .eq('user_id', user.id);
 
@@ -57,6 +53,32 @@ export default function Dashboard() {
       }
     };
     fetchOptIns();
+  }, [user]);
+
+  // Fetch buyer posts created by this user, with seller opt-ins
+  useEffect(() => {
+    if (!user) return;
+    const fetchMyPosts = async () => {
+      const { data, error } = await supabase
+        .from('buyer_posts')
+        .select(`
+          id,
+          title,
+          description,
+          budget,
+          tags,
+          buyer_post_optins (
+            user_id,
+            profiles ( email )
+          )
+        `)
+        .eq('user_id', user.id);
+
+      if (!error && data) {
+        setMyBuyerPosts(data);
+      }
+    };
+    fetchMyPosts();
   }, [user]);
 
   const handleSubmit = async (e: any) => {
@@ -241,17 +263,47 @@ export default function Dashboard() {
       ) : (
         // BUYER TAB
         <div>
-          <h2 className="text-xl font-semibold mb-4">Buyer Post Opt-ins</h2>
+          <h2 className="text-xl font-semibold mb-4">Posts You Have Opted Into</h2>
           {buyerOptIns.length === 0 ? (
             <p>No buyer posts opted into yet.</p>
           ) : (
-            <ul className="space-y-4">
+            <ul className="space-y-4 mb-10">
               {buyerOptIns.map((post) => (
                 <li key={post.id} className="bg-gray-800 p-4 rounded">
                   <h3 className="text-lg font-semibold">{post.title}</h3>
                   <p className="text-sm text-gray-400">{post.description}</p>
                   <p className="text-sm text-gray-300">Budget: ${post.budget.toFixed(2)}</p>
                   <p className="text-sm text-gray-400">Tags: {post.tags?.join(', ')}</p>
+                </li>
+              ))}
+            </ul>
+          )}
+
+          <h2 className="text-xl font-semibold mb-4">Your Buyer Posts & Opt-ins</h2>
+          {myBuyerPosts.length === 0 ? (
+            <p>You have not created any buyer posts yet.</p>
+          ) : (
+            <ul className="space-y-6">
+              {myBuyerPosts.map((post) => (
+                <li key={post.id} className="bg-gray-800 p-4 rounded">
+                  <h3 className="text-lg font-semibold">{post.title}</h3>
+                  <p className="text-sm text-gray-400">{post.description}</p>
+                  <p className="text-sm text-gray-300">Budget: ${post.budget.toFixed(2)}</p>
+                  <p className="text-sm text-gray-400">Tags: {post.tags?.join(', ')}</p>
+                  <div className="mt-4">
+                    <h4 className="font-semibold">Sellers who opted in:</h4>
+                    {post.buyer_post_optins.length === 0 ? (
+                      <p className="text-gray-400 text-sm">No sellers have opted in yet.</p>
+                    ) : (
+                      <ul className="list-disc pl-6">
+                        {post.buyer_post_optins.map((opt: any) => (
+                          <li key={opt.user_id} className="text-sm">
+                            {opt.profiles?.email || opt.user_id}
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+                  </div>
                 </li>
               ))}
             </ul>
