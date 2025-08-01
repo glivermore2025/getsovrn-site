@@ -32,7 +32,7 @@ export default function Dashboard() {
     fetchListings();
   }, [user]);
 
-  // Fetch buyer post opt-ins (posts this user has opted into)
+  // Fetch buyer post opt-ins
   useEffect(() => {
     if (!user) return;
     const fetchOptIns = async () => {
@@ -55,7 +55,7 @@ export default function Dashboard() {
     fetchOptIns();
   }, [user]);
 
-  // Fetch buyer posts created by this user, with seller opt-ins
+  // Fetch buyer posts created by this user
   useEffect(() => {
     if (!user) return;
     const fetchMyPosts = async () => {
@@ -145,7 +145,6 @@ export default function Dashboard() {
   const handleDelete = async (listingId: string, filePath: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return;
 
-    // Check purchases
     const { data: purchases } = await supabase
       .from('purchases')
       .select('id')
@@ -156,10 +155,8 @@ export default function Dashboard() {
       return;
     }
 
-    // Remove file
     await supabase.storage.from('datasets').remove([filePath]);
 
-    // Delete listing
     await supabase
       .from('listings')
       .delete()
@@ -170,13 +167,45 @@ export default function Dashboard() {
     setListings(updated);
   };
 
+  const handleOptOut = async (postId: string) => {
+    if (!confirm('Are you sure you want to opt out of this post?')) return;
+
+    // Future: Add approval check here
+    const { error } = await supabase
+      .from('buyer_post_optins')
+      .delete()
+      .eq('buyer_post_id', postId)
+      .eq('user_id', user.id);
+
+    if (error) {
+      console.error('Failed to opt out:', error);
+      alert('Failed to opt out of this post.');
+      return;
+    }
+
+    const { data: updated } = await supabase
+      .from('buyer_post_optins')
+      .select(`
+        buyer_post_id,
+        buyer_posts ( title, description, budget, tags )
+      `)
+      .eq('user_id', user.id);
+
+    if (updated) {
+      const cleaned = updated.map((optin: any) => ({
+        id: optin.buyer_post_id,
+        ...optin.buyer_posts,
+      }));
+      setBuyerOptIns(cleaned);
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head><title>Dashboard – Sovrn</title></Head>
 
       <h1 className="text-3xl font-bold mb-6">User Dashboard</h1>
 
-      {/* Tabs */}
       <div className="flex mb-8 space-x-4">
         <button
           onClick={() => setActiveTab('seller')}
@@ -197,41 +226,34 @@ export default function Dashboard() {
       ) : !user ? (
         <p className="text-red-400">You must be logged in to view the dashboard.</p>
       ) : activeTab === 'seller' ? (
-        // SELLER TAB
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-10">
           <form onSubmit={handleSubmit} className="space-y-4 bg-gray-900 p-6 rounded-md">
             <h2 className="text-xl font-semibold mb-4">Create New Listing</h2>
-
             <div>
               <label className="block text-sm mb-1">Title</label>
               <input type="text" className="w-full p-2 rounded bg-gray-800" value={title}
                 onChange={(e) => setTitle(e.target.value)} required />
             </div>
-
             <div>
               <label className="block text-sm mb-1">Description</label>
               <textarea className="w-full p-2 rounded bg-gray-800" value={description}
                 onChange={(e) => setDescription(e.target.value)} />
             </div>
-
             <div>
               <label className="block text-sm mb-1">Tags (comma-separated)</label>
               <input type="text" className="w-full p-2 rounded bg-gray-800" value={tags}
                 onChange={(e) => setTags(e.target.value)} />
             </div>
-
             <div>
               <label className="block text-sm mb-1">Price (USD)</label>
               <input type="number" className="w-full p-2 rounded bg-gray-800" value={price}
                 onChange={(e) => setPrice(e.target.value)} required />
             </div>
-
             <div>
               <label className="block text-sm mb-1">Upload File</label>
               <input type="file" className="w-full p-2 rounded bg-gray-800"
                 onChange={(e) => setFile(e.target.files?.[0] || null)} required />
             </div>
-
             <button type="submit" className="bg-blue-600 py-2 px-4 rounded w-full">Submit Listing</button>
             {error && <p className="text-red-400 text-sm mt-2">{error}</p>}
           </form>
@@ -261,7 +283,6 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        // BUYER TAB
         <div>
           <h2 className="text-xl font-semibold mb-4">Posts You Have Opted Into</h2>
           {buyerOptIns.length === 0 ? (
@@ -274,6 +295,14 @@ export default function Dashboard() {
                   <p className="text-sm text-gray-400">{post.description}</p>
                   <p className="text-sm text-gray-300">Budget: ${post.budget.toFixed(2)}</p>
                   <p className="text-sm text-gray-400">Tags: {post.tags?.join(', ')}</p>
+                  <div className="mt-4">
+                    <button
+                      onClick={() => handleOptOut(post.id)}
+                      className="bg-red-600 hover:bg-red-700 px-4 py-2 rounded text-sm"
+                    >
+                      Opt Out
+                    </button>
+                  </div>
                 </li>
               ))}
             </ul>
