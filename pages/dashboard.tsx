@@ -39,7 +39,12 @@ export default function Dashboard() {
         .from('buyer_post_optins')
         .select(`
           buyer_post_id,
-          buyer_posts ( title, description, budget, tags )
+          buyer_posts (
+            title,
+            description,
+            budget,
+            tags
+          )
         `)
         .eq('user_id', user.id);
 
