@@ -3,8 +3,10 @@ import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { supabase } from '../../lib/supabaseClient';
 import axios from 'axios';
+import { useRouter } from 'next/router';
 
 export default function Marketplace() {
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState<'buy' | 'sell'>('buy');
   const [listings, setListings] = useState<any[]>([]);
   const [buyerPosts, setBuyerPosts] = useState<any[]>([]);
@@ -62,7 +64,10 @@ export default function Marketplace() {
     } else if (sort === 'price_high') {
       result.sort((a, b) => b.price - a.price);
     } else {
-      result.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime());
+      result.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
     }
 
     setFiltered(result);
@@ -71,7 +76,9 @@ export default function Marketplace() {
   const handlePurchase = async (listingId: string) => {
     setLoading(listingId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         alert('You must be logged in to purchase.');
         return;
@@ -94,7 +101,9 @@ export default function Marketplace() {
   const handleOptIn = async (postId: string) => {
     setOptInLoading(postId);
     try {
-      const { data: { user } } = await supabase.auth.getUser();
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
       if (!user) {
         alert('You must be logged in to opt in.');
         return;
@@ -123,7 +132,8 @@ export default function Marketplace() {
         console.error('Error opting in:', error);
         alert('Failed to opt-in.');
       } else {
-        alert('Successfully opted in! The buyer will review your data.');
+        // Redirect back to Sell tab after success
+        router.push('/marketplace?refresh=true#sell');
       }
     } catch (err) {
       console.error('Error during opt-in:', err);
@@ -147,13 +157,21 @@ export default function Marketplace() {
       <div className="flex justify-center mb-8 space-x-4">
         <button
           onClick={() => setActiveTab('buy')}
-          className={`px-4 py-2 rounded ${activeTab === 'buy' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+          className={`px-4 py-2 rounded ${
+            activeTab === 'buy'
+              ? 'bg-blue-600'
+              : 'bg-gray-700 hover:bg-gray-600'
+          }`}
         >
           Buy Data
         </button>
         <button
           onClick={() => setActiveTab('sell')}
-          className={`px-4 py-2 rounded ${activeTab === 'sell' ? 'bg-blue-600' : 'bg-gray-700 hover:bg-gray-600'}`}
+          className={`px-4 py-2 rounded ${
+            activeTab === 'sell'
+              ? 'bg-blue-600'
+              : 'bg-gray-700 hover:bg-gray-600'
+          }`}
         >
           Sell Data
         </button>
@@ -177,7 +195,9 @@ export default function Marketplace() {
             >
               <option value="all">All Tags</option>
               {uniqueTags.map((t) => (
-                <option key={t} value={t}>{t}</option>
+                <option key={t} value={t}>
+                  {t}
+                </option>
               ))}
             </select>
 
@@ -197,13 +217,25 @@ export default function Marketplace() {
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {filtered.map((listing) => (
-                <div key={listing.id} className="bg-gray-900 p-6 rounded-xl shadow hover:shadow-blue-700/30 transition">
-                  <h3 className="text-2xl font-semibold mb-2 text-white">{listing.title}</h3>
-                  <p className="text-sm text-gray-400 mb-4 line-clamp-3">{listing.description}</p>
-                  <p className="text-lg font-bold text-green-400 mb-2">${listing.price.toFixed(2)}</p>
+                <div
+                  key={listing.id}
+                  className="bg-gray-900 p-6 rounded-xl shadow hover:shadow-blue-700/30 transition"
+                >
+                  <h3 className="text-2xl font-semibold mb-2 text-white">
+                    {listing.title}
+                  </h3>
+                  <p className="text-sm text-gray-400 mb-4 line-clamp-3">
+                    {listing.description}
+                  </p>
+                  <p className="text-lg font-bold text-green-400 mb-2">
+                    ${listing.price.toFixed(2)}
+                  </p>
                   {listing.tags?.length > 0 && (
                     <p className="text-sm text-gray-300 mb-4">
-                      Tags: <span className="text-blue-400">{listing.tags.join(', ')}</span>
+                      Tags:{' '}
+                      <span className="text-blue-400">
+                        {listing.tags.join(', ')}
+                      </span>
                     </p>
                   )}
 
@@ -241,17 +273,31 @@ export default function Marketplace() {
           </div>
 
           {buyerPosts.length === 0 ? (
-            <p className="text-center text-gray-400 mt-20">No buyer posts found.</p>
+            <p className="text-center text-gray-400 mt-20">
+              No buyer posts found.
+            </p>
           ) : (
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
               {buyerPosts.map((post) => (
-                <div key={post.id} className="bg-gray-900 p-6 rounded-xl shadow hover:shadow-blue-700/30 transition">
-                  <h3 className="text-2xl font-semibold mb-2 text-white">{post.title}</h3>
-                  <p className="text-sm text-gray-400 mb-4 line-clamp-3">{post.description}</p>
-                  <p className="text-lg font-bold text-green-400 mb-2">Budget: ${post.budget.toFixed(2)}</p>
+                <div
+                  key={post.id}
+                  className="bg-gray-900 p-6 rounded-xl shadow hover:shadow-blue-700/30 transition"
+                >
+                  <h3 className="text-2xl font-semibold mb-2 text-white">
+                    {post.title}
+                  </h3>
+                  <p className="text-sm text-gray-400 mb-4 line-clamp-3">
+                    {post.description}
+                  </p>
+                  <p className="text-lg font-bold text-green-400 mb-2">
+                    Budget: ${post.budget.toFixed(2)}
+                  </p>
                   {post.tags?.length > 0 && (
                     <p className="text-sm text-gray-300 mb-4">
-                      Tags: <span className="text-blue-400">{post.tags.join(', ')}</span>
+                      Tags:{' '}
+                      <span className="text-blue-400">
+                        {post.tags.join(', ')}
+                      </span>
                     </p>
                   )}
 
