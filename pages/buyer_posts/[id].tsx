@@ -64,8 +64,8 @@ export default function BuyerPostDetails() {
       return;
     }
 
-    alert('You have successfully opted in.');
-    setHasOptedIn(true);
+    // Redirect back to marketplace Sell tab to refresh posts
+    router.push('/marketplace?refresh=true#sell');
   };
 
   const handleOptOut = async () => {
@@ -85,8 +85,8 @@ export default function BuyerPostDetails() {
       return;
     }
 
-    alert('You have opted out.');
-    setHasOptedIn(false);
+    // Redirect back to marketplace Sell tab to refresh posts
+    router.push('/marketplace?refresh=true#sell');
   };
 
   if (loading) return <div className="p-8 text-white">Loading...</div>;
