@@ -1,3 +1,4 @@
+// /pages/api/checkout_sessions.ts
 import type { NextApiRequest, NextApiResponse } from 'next';
 import Stripe from 'stripe';
 import { createClient } from '@supabase/supabase-js';
@@ -14,7 +15,6 @@ const supabase = createClient(
 );
 
 function siteUrl(req: NextApiRequest) {
-  // Prefer explicit env; fallback to request host if you access locally
   const fromEnv = process.env.NEXT_PUBLIC_SITE_URL;
   if (fromEnv) return fromEnv.replace(/\/$/, '');
   const proto = (req.headers['x-forwarded-proto'] as string) || 'https';
@@ -25,22 +25,26 @@ function siteUrl(req: NextApiRequest) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
 
-  const { datasetId, listingId, userId } = req.body as {
+  const { datasetId, listingId, userId, quantity } = req.body as {
     datasetId?: string;
     listingId?: string;
     userId?: string;
+    quantity?: number; // NEW
   };
 
   if (!datasetId && !listingId) {
     return res.status(400).json({ error: 'Provide datasetId or listingId' });
   }
   if (!userId) {
-    // You can loosen this if you truly support guest checkout
     return res.status(400).json({ error: 'Missing userId' });
   }
 
+  // sanitize quantity (datasets only)
+  const qty = Number.isFinite(quantity) ? Math.floor(Number(quantity)) : 1;
+  const safeQty = Math.min(Math.max(qty, 1), 100); // clamp 1..100
+
   try {
-    // Fetch email from profiles for nicer Stripe receipts & customer history
+    // Prefill email for better receipts
     let customerEmail: string | undefined = undefined;
     {
       const { data: profile } = await supabase
@@ -53,7 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const baseUrl = siteUrl(req);
 
-    // --- CASE 1: DATASET CHECKOUT (pooled model)
+    // --- CASE 1: DATASET CHECKOUT (pooled model) ---
     if (datasetId) {
       const { data: ds, error: dsErr } = await supabase
         .from('datasets')
@@ -61,52 +65,46 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('id', datasetId)
         .maybeSingle();
 
-      if (dsErr || !ds) {
-        return res.status(400).json({ error: 'Dataset not found' });
-      }
-      if (!ds.is_active) {
-        return res.status(400).json({ error: 'Dataset is not active' });
-      }
+      if (dsErr || !ds) return res.status(400).json({ error: 'Dataset not found' });
+      if (!ds.is_active) return res.status(400).json({ error: 'Dataset is not active' });
       if (!Number.isFinite(ds.unit_price_cents) || ds.unit_price_cents <= 0) {
         return res.status(400).json({ error: 'Invalid dataset price' });
       }
 
-      const session = await stripe.checkout.sessions.create(
-        {
-          mode: 'payment',
-          payment_method_types: ['card'],
-          line_items: [
-            {
-              price_data: {
-                currency: 'usd',
-                product_data: {
-                  name: ds.name,
-                  description: ds.description ?? undefined,
-                },
-                unit_amount: ds.unit_price_cents, // already in cents
+      const session = await stripe.checkout.sessions.create({
+        mode: 'payment',
+        payment_method_types: ['card'],
+        line_items: [
+          {
+            price_data: {
+              currency: 'usd',
+              product_data: {
+                name: ds.name,
+                description: ds.description ?? undefined,
               },
-              quantity: 1,
+              unit_amount: ds.unit_price_cents, // cents
             },
-          ],
-          success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
-          cancel_url: `${baseUrl}/cancel`,
-          customer_email: customerEmail,
-          billing_address_collection: 'auto',
-          allow_promotion_codes: true,
-          client_reference_id: `dataset:${ds.id}:user:${userId}`,
-          metadata: {
-            type: 'dataset',
-            dataset_id: ds.id,
-            user_id: userId,
+            quantity: safeQty, // NEW
           },
-        }
-        // You could pass an idempotency key as 2nd arg if you generate one client-side
-      );
+        ],
+        success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${baseUrl}/cancel`,
+        customer_email: customerEmail,
+        billing_address_collection: 'auto',
+        allow_promotion_codes: true,
+        client_reference_id: `dataset:${ds.id}:user:${userId}:qty:${safeQty}`, // NEW
+        metadata: {
+          type: 'dataset',
+          dataset_id: ds.id,
+          user_id: userId,
+          quantity: String(safeQty), // NEW
+        },
+      });
 
       return res.status(200).json({ url: session.url });
     }
 
-    // --- CASE 2: LISTING CHECKOUT (legacy single listing)
+    // --- CASE 2: LISTING CHECKOUT (legacy) ---
     if (listingId) {
       const { data: listing, error } = await supabase
         .from('listings')
@@ -114,12 +112,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         .eq('id', listingId)
         .maybeSingle();
 
-      if (error || !listing) {
-        return res.status(400).json({ error: 'Listing not found' });
-      }
-      if (listing.is_flagged) {
-        return res.status(400).json({ error: 'Listing is not available' });
-      }
+      if (error || !listing) return res.status(400).json({ error: 'Listing not found' });
+      if (listing.is_flagged) return res.status(400).json({ error: 'Listing is not available' });
       if (!Number.isFinite(listing.price) || listing.price <= 0) {
         return res.status(400).json({ error: 'Invalid listing price' });
       }
@@ -135,9 +129,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 name: listing.title,
                 description: listing.description ?? undefined,
               },
-              unit_amount: Math.round(listing.price * 100), // price in cents
+              unit_amount: Math.round(listing.price * 100),
             },
-            quantity: 1,
+            quantity: 1, // keep legacy as single-license for now
           },
         ],
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -156,11 +150,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       return res.status(200).json({ url: session.url });
     }
 
-    // Fallback (shouldn’t reach here due to early checks)
     return res.status(400).json({ error: 'Provide datasetId or listingId' });
   } catch (e: any) {
     console.error('checkout_sessions error:', e);
     return res.status(500).json({ error: 'Failed to create checkout session' });
   }
 }
-
