@@ -4,19 +4,13 @@ import Stripe from 'stripe';
 import { buffer } from 'micro';
 import { createClient } from '@supabase/supabase-js';
 
-export const config = {
-  api: { bodyParser: false },
-};
+export const config = { api: { bodyParser: false } };
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-  // Keep stable & compatible with your Stripe settings
-  apiVersion: '2022-11-15',
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, { apiVersion: '2022-11-15' });
 
-// Service role client (server-only)
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.SUPABASE_SERVICE_ROLE_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY! // RLS bypass
 );
 
 const endpointSecret = process.env.STRIPE_WEBHOOK_SECRET!;
@@ -36,117 +30,119 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     return res.status(400).send(`Webhook Error: ${message}`);
   }
 
-  if (event.type !== 'checkout.session.completed') {
-    // Acknowledge other events without work
-    return res.status(200).json({ received: true });
-  }
+  if (event.type === 'checkout.session.completed') {
+    const session = event.data.object as Stripe.Checkout.Session;
 
-  const session = event.data.object as Stripe.Checkout.Session;
+    const type = session.metadata?.type; // 'dataset' | 'listing'
+    const userId = session.metadata?.user_id || null;
 
-  // Common, safe helpers
-  const amountTotalCents = typeof session.amount_total === 'number' ? session.amount_total : 0;
-  const sessionId = session.id;
-  const metadata = session.metadata || {};
-  const userId = metadata.user_id || null;
-  const listingId = metadata.listing_id || null;
-  const datasetId = metadata.dataset_id || null;
+    if (!type || !userId) {
+      console.warn('⚠️ Missing metadata in Stripe session:', session.id, session.metadata);
+      return res.status(400).send('Missing purchase metadata');
+    }
 
-  if (!userId) {
-    console.warn('⚠️ checkout.session.completed without user_id metadata', { sessionId });
-    return res.status(400).send('Missing user_id metadata');
-  }
+    // Idempotency check (purchases table for legacy; adjust if you track dataset separately)
+    const { data: existing, error: fetchError } = await supabase
+      .from('purchases')
+      .select('id')
+      .eq('session_id', session.id)
+      .maybeSingle();
 
-  try {
-    if (datasetId) {
-      // -----------------------------
-      // DATASET SALE (mutual-fund flow)
-      // -----------------------------
+    if (fetchError) {
+      console.error('❌ Error checking for existing purchase:', fetchError);
+      return res.status(500).send('Database query failed');
+    }
 
-      // Idempotency: ensure we don’t double-insert the sale
-      const { data: existingSale, error: checkSaleErr } = await supabase
-        .from('dataset_sales')
-        .select('id')
-        .eq('stripe_session_id', sessionId)
-        .maybeSingle();
+    if (existing) {
+      console.log(`ℹ️ Already processed session ${session.id}`);
+      return res.status(200).json({ received: true });
+    }
 
-      if (checkSaleErr) {
-        console.error('❌ Error checking existing dataset sale:', checkSaleErr);
-        return res.status(500).send('Database query failed');
-      }
+    // TOTAL charged (post-discounts/tax), in dollars
+    const grossAmount = session.amount_total ? session.amount_total / 100 : null;
 
-      if (!existingSale) {
-        const { error: saleErr } = await supabase.from('dataset_sales').insert([
-          {
-            dataset_id: datasetId,
-            buyer_id: userId,
-            amount_cents: amountTotalCents,
-            quantity: 1,
-            stripe_session_id: sessionId,
-          },
-        ]);
+    try {
+      if (type === 'dataset') {
+        const datasetId = session.metadata?.dataset_id;
+        const qty = Math.max(1, parseInt(session.metadata?.quantity || '1', 10));
+
+        if (!datasetId) {
+          console.warn('⚠️ Missing dataset_id in metadata for session', session.id);
+          return res.status(400).send('Missing dataset_id');
+        }
+
+        // Record a single row in purchases to satisfy idempotency (you can also create a dedicated table)
+        const { error: purchaseError } = await supabase.from('purchases').insert([{
+          user_id: userId,
+          listing_id: null,        // legacy column—nullable
+          session_id: session.id,
+          dataset_id: datasetId,   // if you added this column; otherwise remove
+        }]);
+        if (purchaseError) {
+          console.error('❌ Failed to insert purchase:', purchaseError);
+          return res.status(500).send('Failed to record purchase');
+        }
+
+        // Record dataset sale (quantity-aware)
+        const { error: saleErr } = await supabase.from('dataset_sales').insert([{
+          dataset_id: datasetId,
+          buyer_id: userId,
+          quantity: qty,                                 // NEW
+          gross_amount: grossAmount,                     // total charged
+          session_id: session.id,
+          purchased_at: new Date().toISOString(),
+        }]);
         if (saleErr) {
           console.error('❌ Failed to insert dataset sale:', saleErr);
           return res.status(500).send('Failed to record dataset sale');
         }
 
-        // Your trigger public.on_dataset_sale_after_insert() will call distribute_dataset_sale(new.id)
-        console.log(`✅ Dataset sale recorded & distribution triggered. session=${sessionId}`);
-      } else {
-        console.log(`ℹ️ Dataset sale already exists for session ${sessionId}`);
-      }
-    } else if (listingId) {
-      // -----------------------------
-      // LISTING PURCHASE (one-off file sale flow)
-      // -----------------------------
-
-      // Idempotency: ensure we don’t double-insert the purchase
-      const { data: existingPurchase, error: checkPurchaseErr } = await supabase
-        .from('purchases')
-        .select('id')
-        .eq('session_id', sessionId)
-        .maybeSingle();
-
-      if (checkPurchaseErr) {
-        console.error('❌ Error checking existing purchase:', checkPurchaseErr);
-        return res.status(500).send('Database query failed');
-      }
-
-      if (!existingPurchase) {
-        // Insert into purchases
-        const { error: purchaseErr } = await supabase.from('purchases').insert([
-          { user_id: userId, listing_id: listingId, session_id: sessionId },
-        ]);
-        if (purchaseErr) {
-          console.error('❌ Failed to insert purchase:', purchaseErr);
-          return res.status(500).send('Failed to record purchase');
-        }
-
-        // Insert into transactions (for admin metrics)
-        const { error: txnErr } = await supabase.from('transactions').insert([
-          {
-            buyer_id: userId,
-            listing_id: listingId,
-            purchase_price: amountTotalCents ? amountTotalCents / 100 : null,
-            purchased_at: new Date().toISOString(),
-          },
-        ]);
+        // Optional: also add a row into transactions for global reporting
+        const { error: txnErr } = await supabase.from('transactions').insert([{
+          buyer_id: userId,
+          listing_id: null,       // legacy column—nullable
+          dataset_id: datasetId,  // if you added this column; otherwise remove
+          purchase_price: grossAmount,
+          purchased_at: new Date().toISOString(),
+        }]);
         if (txnErr) {
           console.error('❌ Failed to insert transaction:', txnErr);
           return res.status(500).send('Failed to record transaction');
         }
+      } else if (type === 'listing') {
+        const listingId = session.metadata?.listing_id;
+        if (!listingId) {
+          console.warn('⚠️ Missing listing_id in metadata for session', session.id);
+          return res.status(400).send('Missing listing_id');
+        }
 
-        console.log(`✅ Listing purchase & transaction recorded. session=${sessionId}`);
-      } else {
-        console.log(`ℹ️ Listing purchase already exists for session ${sessionId}`);
+        const { error: purchaseError } = await supabase.from('purchases').insert([{
+          user_id: userId,
+          listing_id: listingId,
+          session_id: session.id,
+        }]);
+        if (purchaseError) {
+          console.error('❌ Failed to insert purchase:', purchaseError);
+          return res.status(500).send('Failed to record purchase');
+        }
+
+        const { error: txnError } = await supabase.from('transactions').insert([{
+          buyer_id: userId,
+          listing_id: listingId,
+          purchase_price: grossAmount,
+          purchased_at: new Date().toISOString(),
+        }]);
+        if (txnError) {
+          console.error('❌ Failed to insert transaction:', txnError);
+          return res.status(500).send('Failed to record transaction');
+        }
       }
-    } else {
-      // Neither dataset_id nor listing_id present
-      console.warn('⚠️ checkout.session.completed missing dataset_id AND listing_id metadata', { sessionId, metadata });
-      return res.status(400).send('Missing dataset_id or listing_id metadata');
+
+      console.log(`✅ Recorded ${type} checkout: session ${session.id}`);
+    } catch (err) {
+      console.error('❌ Unhandled webhook error:', err);
+      return res.status(500).send('Internal server error');
     }
-  } catch (err) {
-    console.error('❌ Unhandled webhook error:', err);
-    return res.status(500).send('Internal server error');
   }
 
   return res.status(200).json({ received: true });
