@@ -22,6 +22,7 @@ export default function Markets() {
   const [loadingId, setLoadingId] = useState<string | null>(null);
   const [pageLoading, setPageLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string | null>(null);
+  const [qtyById, setQtyById] = useState<Record<string, number>>({}); // quantity per dataset
 
   useEffect(() => {
     (async () => {
@@ -43,6 +44,12 @@ export default function Markets() {
     })();
   }, []);
 
+  const clampQty = (n: number) => Math.max(1, Math.min(100, Math.floor(Number(n) || 1)));
+
+  const handleQtyChange = (datasetId: string, value: number) => {
+    setQtyById((prev) => ({ ...prev, [datasetId]: clampQty(value) }));
+  };
+
   const handleBuy = async (datasetId: string) => {
     try {
       setLoadingId(datasetId);
@@ -54,9 +61,12 @@ export default function Markets() {
         return;
       }
 
+      const quantity = qtyById[datasetId] ?? 1;
+
       const res = await axios.post('/api/checkout_sessions', {
         datasetId,
         userId: user.id,
+        quantity, // <-- wired to backend
       });
 
       const url = res?.data?.url;
@@ -107,6 +117,22 @@ export default function Markets() {
               <p className="text-lg font-bold">
                 Price: ${(ds.unit_price_cents / 100).toFixed(2)}
               </p>
+
+              {/* Quantity */}
+              <div className="mt-3 flex items-center gap-2">
+                <label htmlFor={`qty-${ds.id}`} className="text-sm text-gray-300">
+                  Quantity
+                </label>
+                <input
+                  id={`qty-${ds.id}`}
+                  type="number"
+                  min={1}
+                  max={100}
+                  value={qtyById[ds.id] ?? 1}
+                  onChange={(e) => handleQtyChange(ds.id, Number(e.target.value))}
+                  className="w-20 bg-gray-800 rounded px-2 py-1 border border-gray-700"
+                />
+              </div>
 
               <div className="flex gap-2 mt-4">
                 <Link
