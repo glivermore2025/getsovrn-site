@@ -9,7 +9,7 @@
   },
   "dependencies": {
     "autoprefixer": "latest",
-    "next": "latest",
+    "next": "15.5.8",
     "postcss": "latest",
     "react": "latest",
     "react-dom": "latest",
@@ -18,11 +18,10 @@
     "@supabase/supabase-js": "^2.39.5",
     "uuid": "^9.0.0",
     "axios": "^1.5.0",
-    "stripe": "^12.18.0",
+    "stripe": "^12.16.0",
     "micro": "^9.3.4",
     "recharts": "^2.8.0",
-     "papaparse": "^5.4.1",
-    "stripe": "^12.16.0"
+    "papaparse": "^5.4.1"
   },
   "devDependencies": {
     "typescript": "^5.4.0",
@@ -35,6 +34,6 @@
     "@types/papaparse": "^5.2.7"
   },
   "engines": {
-  "node": "20.x"
-}
+    "node": "20.x"
+  }
 }
