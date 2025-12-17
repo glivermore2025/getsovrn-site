@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 import { ADMIN_USER_IDS } from '../../lib/constants';
 import { useRouter } from 'next/router';
 import {
@@ -20,6 +20,7 @@ export default function AdminMetrics() {
   const [currentPage, setCurrentPage] = useState(1);
   const pageSize = 10;
   const router = useRouter();
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     supabase.auth.getUser().then(({ data }) => {

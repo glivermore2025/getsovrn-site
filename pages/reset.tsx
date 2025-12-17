@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 import Head from 'next/head';
 
 export default function ResetPassword() {
@@ -10,6 +10,7 @@ export default function ResetPassword() {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     // Supabase handles the session automatically on redirect

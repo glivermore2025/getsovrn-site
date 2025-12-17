@@ -1,6 +1,7 @@
 // utils/fetchListings.ts
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 
+const supabase = getSupabaseClient();
 export const getUserListings = async (userId: string) => {
   const { data, error } = await supabase
     .from('listings')

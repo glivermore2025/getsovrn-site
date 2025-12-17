@@ -1,11 +1,12 @@
 import { useState } from 'react';
 import Head from 'next/head';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 import { useRouter } from 'next/router';
 
 export default function Signup() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const supabase = getSupabaseClient();
   const [error, setError] = useState('');
   const router = useRouter();
 

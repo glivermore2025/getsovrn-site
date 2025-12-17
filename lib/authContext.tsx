@@ -1,12 +1,13 @@
 // lib/authContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
-import { supabase } from './supabaseClient';
+import { getSupabaseClient } from './supabaseClient';
 
 const AuthContext = createContext<any>(null);
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     // Initial fetch
@@ -16,9 +17,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Subscribe to auth changes
-const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-  setUser(session?.user ?? null); // ✅ use session directly
-});
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null); // ✅ use session directly
+    });
 
 
     return () => {

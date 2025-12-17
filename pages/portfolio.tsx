@@ -1,10 +1,11 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 
 export default function Portfolio() {
   const [balance, setBalance] = useState<number>(0);
   const [shares, setShares] = useState<any[]>([]);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     (async () => {

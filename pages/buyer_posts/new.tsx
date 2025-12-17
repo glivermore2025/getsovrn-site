@@ -1,7 +1,7 @@
 // pages/buyer_posts/new.tsx
 import { useState } from 'react';
 import Head from 'next/head';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import { useAuth } from '../../lib/authContext';
 
@@ -14,6 +14,7 @@ export default function NewBuyerPost() {
   const [budget, setBudget] = useState('');
   const [tags, setTags] = useState('');
   const [error, setError] = useState('');
+  const supabase = getSupabaseClient();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

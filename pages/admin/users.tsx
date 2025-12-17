@@ -1,10 +1,11 @@
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useRouter } from 'next/router';
 import { ADMIN_USER_IDS } from '../../lib/constants';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
+  const supabase = getSupabaseClient();
   const router = useRouter();
 
   useEffect(() => {

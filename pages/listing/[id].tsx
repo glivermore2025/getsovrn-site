@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 import Papa from 'papaparse';
 import axios from 'axios';
 import { useAuth } from '../../lib/authContext'; // Added
@@ -16,6 +16,7 @@ export default function ListingDetails() {
   const [showModal, setShowModal] = useState(false);
   const [previewData, setPreviewData] = useState<any>(null);
   const [buying, setBuying] = useState(false);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     if (id) fetchListingById(id as string);

@@ -1,6 +1,6 @@
 import Head from 'next/head';
 import { useState, useEffect } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
 import Papa from 'papaparse';
 import { getUserListings } from '../utils/fetchListings';
@@ -36,6 +36,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const fetchOptIns = async () => {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('buyer_post_optins')
         .select(`
@@ -59,6 +60,7 @@ export default function Dashboard() {
   useEffect(() => {
     if (!user) return;
     const fetchMyPosts = async () => {
+      const supabase = getSupabaseClient();
       const { data, error } = await supabase
         .from('buyer_posts')
         .select(`
@@ -91,6 +93,7 @@ export default function Dashboard() {
     const fileExt = file.name.split('.').pop();
     const fileName = `${uuidv4()}.${fileExt}`;
 
+    const supabase = getSupabaseClient();
     const { error: uploadError } = await supabase.storage
       .from('datasets')
       .upload(fileName, file, { contentType: file.type });
@@ -127,6 +130,7 @@ export default function Dashboard() {
   };
 
   const handlePreview = async (path: string) => {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase.storage.from('datasets').download(path);
     if (error || !data) return alert('Failed to load file.');
 
@@ -145,6 +149,7 @@ export default function Dashboard() {
   const handleDelete = async (listingId: string, filePath: string) => {
     if (!confirm('Are you sure you want to delete this listing?')) return;
 
+    const supabase = getSupabaseClient();
     const { data: purchases } = await supabase
       .from('purchases')
       .select('id')
@@ -171,6 +176,7 @@ export default function Dashboard() {
     if (!confirm('Are you sure you want to opt out of this post?')) return;
 
     // Future: Add approval check here
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from('buyer_post_optins')
       .delete()

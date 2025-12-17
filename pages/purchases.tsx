@@ -1,7 +1,7 @@
 // /pages/purchases.tsx
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 
 interface Listing {
   title: string;
@@ -17,6 +17,7 @@ interface Purchase {
 export default function PurchasesPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     const fetchPurchases = async () => {

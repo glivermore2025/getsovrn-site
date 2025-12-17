@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 import { ADMIN_USER_IDS } from '../../lib/constants';
 
 export default function AdminDashboard() {
@@ -8,6 +8,7 @@ export default function AdminDashboard() {
   const router = useRouter();
 
   useEffect(() => {
+    const supabase = getSupabaseClient();
     supabase.auth.getUser().then(({ data }) => {
       const u = data?.user;
       setUser(u);

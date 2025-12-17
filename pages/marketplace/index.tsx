@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient'; 
 import axios from 'axios';
 import { useRouter } from 'next/router';
 
@@ -16,6 +16,7 @@ export default function Marketplace() {
   const [filtered, setFiltered] = useState<any[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [optInLoading, setOptInLoading] = useState<string | null>(null);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     fetchListings();

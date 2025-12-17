@@ -3,7 +3,7 @@ import Head from 'next/head';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import axios from 'axios';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 
 type Dataset = {
   id: string;
@@ -23,7 +23,7 @@ export default function Markets() {
   const [pageLoading, setPageLoading] = useState(true);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [qtyById, setQtyById] = useState<Record<string, number>>({}); // quantity per dataset
-
+  const supabase = getSupabaseClient();
   useEffect(() => {
     (async () => {
       setPageLoading(true);

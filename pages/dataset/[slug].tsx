@@ -3,7 +3,7 @@ import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 
 type Dataset = {
   id: string;
@@ -17,6 +17,7 @@ type Dataset = {
 export default function DatasetDetail() {
   const router = useRouter();
   const { slug } = router.query;
+  const supabase = getSupabaseClient();
 
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [pageLoading, setPageLoading] = useState(true);

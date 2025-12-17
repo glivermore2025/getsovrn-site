@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import axios from 'axios';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 
 type SessionPayload =
   | {
@@ -35,6 +35,7 @@ export default function SuccessPage() {
   const [payload, setPayload] = useState<SessionPayload | null>(null);
   const [errMsg, setErrMsg] = useState<string | null>(null);
   const [downloading, setDownloading] = useState(false);
+  const supabase = getSupabaseClient();
 
   useEffect(() => {
     if (!session_id) return;

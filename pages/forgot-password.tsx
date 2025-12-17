@@ -1,7 +1,7 @@
 // pages/forgot-password.tsx
 
 import { useState } from 'react';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 import Head from 'next/head';
 
 export default function ForgotPassword() {
@@ -11,6 +11,7 @@ export default function ForgotPassword() {
 
   const handleReset = async (e: any) => {
     e.preventDefault();
+    const supabase = getSupabaseClient();
     const { error } = await supabase.auth.resetPasswordForEmail(email, {
       redirectTo: 'https://getsovrn.com/reset'
     });

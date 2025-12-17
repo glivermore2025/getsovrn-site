@@ -1,7 +1,7 @@
 import { useRouter } from 'next/router';
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
-import { supabase } from '../../lib/supabaseClient';
+import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 
 export default function BuyerPostDetails() {
@@ -21,6 +21,7 @@ export default function BuyerPostDetails() {
   }, [id, user]);
 
   const fetchPost = async (postId: string) => {
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('buyer_posts')
       .select('*')
@@ -33,6 +34,7 @@ export default function BuyerPostDetails() {
 
   const checkIfOptedIn = async (postId: string) => {
     if (!user) return;
+    const supabase = getSupabaseClient();
     const { data, error } = await supabase
       .from('buyer_post_optins')
       .select('id')
@@ -51,6 +53,7 @@ export default function BuyerPostDetails() {
       return;
     }
 
+    const supabase = getSupabaseClient();
     const { error } = await supabase.from('buyer_post_optins').insert([
       {
         buyer_post_id: id,
@@ -73,6 +76,7 @@ export default function BuyerPostDetails() {
     const confirmDelete = confirm('Are you sure you want to opt out of this post?');
     if (!confirmDelete) return;
 
+    const supabase = getSupabaseClient();
     const { error } = await supabase
       .from('buyer_post_optins')
       .delete()

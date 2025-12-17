@@ -1,8 +1,10 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { supabase } from '../lib/supabaseClient';
+import { getSupabaseClient } from '../lib/supabaseClient';
 import { useAuth } from '../lib/authContext';
 import { ADMIN_USER_IDS } from '../lib/constants';
+
+const supabase = getSupabaseClient();
 
 export default function Layout({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
