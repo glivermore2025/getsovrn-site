@@ -1,0 +1,38 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Redirecting…</title>
+    <style>body{font-family:system-ui,Arial,sans-serif;display:flex;align-items:center;justify-content:center;height:100vh;margin:0;background:#fff;color:#111}code{word-break:break-all;background:#f3f4f6;padding:6px;border-radius:6px;display:block;margin-top:8px}</style>
+    <script>
+      (function () {
+        // Read the fragment (preferred) or query string and forward it to the app
+        const fragment = window.location.hash || (window.location.search ? '#' + window.location.search.slice(1) : '');
+        const targetScheme = 'sovrnmobile://auth';
+        const target = targetScheme + fragment;
+
+        // Try to navigate to the app (this will succeed on mobile devices that support custom schemes)
+        window.location.replace(target);
+
+        // If not redirected within ~500ms, show a manual link and the fragment so user/tester can copy it
+        setTimeout(function () {
+          document.body.innerHTML = `
+            <div style="max-width:680px;margin:auto;text-align:left;padding:20px">
+              <h2 style="margin-top:0">Open the Sovrn app</h2>
+              <p>If you are not redirected automatically, <a href="${target}">tap here to open the app</a>.</p>
+              <p style="font-size:13px;color:#666">If this doesn't work, copy the link below into your phone's browser or forward it to your device:</p>
+              <code>${target}</code>
+              <p style="margin-top:12px;color:#444">Raw fragment received from Supabase (for debugging):</p>
+              <code id="frag">${fragment || '(none)'}</code>
+              <p style="margin-top:16px;font-size:12px;color:#666">Note: tokens shown in the fragment are sensitive. Do not share them publicly.</p>
+            </div>
+          `;
+        }, 500);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting…</p>
+  </body>
+</html>
