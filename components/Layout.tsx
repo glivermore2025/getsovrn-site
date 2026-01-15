@@ -26,6 +26,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <Link href="/marketplace" className="hover:text-blue-400">Marketplace</Link>
           <Link href="/market" className="hover:text-blue-400">Markets</Link>
           <Link href="/dashboard" className="hover:text-blue-400">Dashboard</Link>
+          {user && <Link href="/profile" className="hover:text-blue-400">Profile</Link>}
 
           {user ? (
             <div className="flex items-center space-x-4">
