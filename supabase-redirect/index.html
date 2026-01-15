@@ -1,0 +1,32 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Redirecting…</title>
+    <script>
+      (function () {
+        // Forward to the dedicated redirector while preserving query and fragment
+        const search = window.location.search || '';
+        const hash = window.location.hash || '';
+        const target = '/supabase-redirect' + search + hash;
+        // Use replace() so this URL doesn't stay in history
+        window.location.replace(target);
+
+        // Fallback: show a link if auto-redirect fails
+        setTimeout(function () {
+          document.body.innerHTML = `
+            <div style="font-family:system-ui,Arial,sans-serif;padding:24px;max-width:680px;margin:auto">
+              <h2>Redirecting…</h2>
+              <p>If you are not redirected automatically, <a href="${target}">click here</a> to continue.</p>
+              <p style="font-size:12px;color:#666">This page forwards query & fragment to <code>/supabase-redirect</code>.</p>
+            </div>
+          `;
+        }, 500);
+      })();
+    </script>
+  </head>
+  <body>
+    <p>Redirecting…</p>
+  </body>
+</html>
