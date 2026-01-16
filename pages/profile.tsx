@@ -128,7 +128,7 @@ export default function Profile() {
         <title>Profile – Sovrn</title>
       </Head>
 
-      <div className="max-w-2xl mx-auto">
+      <div>
         <h1 className="text-3xl font-bold mb-8">User Profile</h1>
 
         <form onSubmit={handleSave} className="space-y-6">
