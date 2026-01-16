@@ -2,7 +2,6 @@ import Head from 'next/head';
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../lib/supabaseClient';
 import { useAuth } from '../lib/authContext';
-import Layout from '../components/Layout';
 
 export default function Profile() {
   const { user, loading: authLoading } = useAuth();
@@ -104,26 +103,26 @@ export default function Profile() {
 
   if (authLoading || loading) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-gray-950 text-white p-8 max-w-5xl mx-auto">
         <div className="flex justify-center items-center min-h-screen">
           <div className="text-xl">Loading...</div>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   if (!user) {
     return (
-      <Layout>
+      <div className="min-h-screen bg-gray-950 text-white p-8 max-w-5xl mx-auto">
         <div className="text-center">
           <p className="text-red-400">You must be logged in to view your profile.</p>
         </div>
-      </Layout>
+      </div>
     );
   }
 
   return (
-    <Layout>
+    <div className="min-h-screen bg-gray-950 text-white p-8 max-w-5xl mx-auto">
       <Head>
         <title>Profile – Sovrn</title>
       </Head>
@@ -201,6 +200,6 @@ export default function Profile() {
           </div>
         </div>
       </div>
-    </Layout>
+    </div>
   );
 }
