@@ -21,12 +21,15 @@ export default function Home() {
         </p>
 
         {/* Primary CTAs */}
-        <div className="space-x-4 mb-10">
+        <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-10">
           <a href="/marketplace" className="bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition">
             Browse Marketplace
           </a>
           <a href="/dashboard" className="bg-green-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-green-700 transition">
             Start Selling
+          </a>
+          <a href="/buyer" className="bg-indigo-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-indigo-700 transition">
+            Buyer Portal
           </a>
         </div>
       </main>

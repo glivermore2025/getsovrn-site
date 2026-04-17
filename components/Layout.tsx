@@ -25,6 +25,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         <nav className="flex items-center space-x-6 text-sm">
           <Link href="/marketplace" className="hover:text-blue-400">Marketplace</Link>
           <Link href="/market" className="hover:text-blue-400">Markets</Link>
+          <Link href="/buyer" className="hover:text-blue-400">Buyer Portal</Link>
           <Link href="/dashboard" className="hover:text-blue-400">Dashboard</Link>
           {user && <Link href="/profile" className="hover:text-blue-400">Profile</Link>}
 
