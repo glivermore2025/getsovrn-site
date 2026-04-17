@@ -102,10 +102,22 @@
       "namedRegex": "^/cancel(?:/)?$"
     },
     {
+      "page": "/connectivity",
+      "regex": "^/connectivity(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/connectivity(?:/)?$"
+    },
+    {
       "page": "/dashboard",
       "regex": "^/dashboard(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/dashboard(?:/)?$"
+    },
+    {
+      "page": "/data-rights",
+      "regex": "^/data\\-rights(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/data\\-rights(?:/)?$"
     },
     {
       "page": "/forgot-password",

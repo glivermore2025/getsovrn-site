@@ -175,3 +175,105 @@ LEFT JOIN device_events e
   ON e.user_id = p.user_id
   AND e.module_key = p.module_key
 GROUP BY p.user_id, p.module_key, m.name, m.description, m.privacy_level, v.estimated_value_cents;
+
+-- ============================================================
+-- PURCHASE METADATA FOR REPRODUCIBLE EXPORTS
+-- ============================================================
+
+ALTER TABLE IF EXISTS public.purchases
+  ADD COLUMN IF NOT EXISTS filter_json jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+ALTER TABLE IF EXISTS public.purchases
+  ADD COLUMN IF NOT EXISTS export_path text;
+
+ALTER TABLE IF EXISTS public.dataset_purchases
+  ADD COLUMN IF NOT EXISTS filter_json jsonb NOT NULL DEFAULT '{}'::jsonb;
+
+ALTER TABLE IF EXISTS public.dataset_purchases
+  ADD COLUMN IF NOT EXISTS export_path text;
+
+ALTER TABLE IF EXISTS public.dataset_connectivity_daily
+  ADD COLUMN IF NOT EXISTS platform text;
+
+ALTER TABLE IF EXISTS public.dataset_connectivity_daily
+  ADD COLUMN IF NOT EXISTS consent_version text;
+
+ALTER TABLE IF EXISTS public.dataset_connectivity_daily
+  ADD COLUMN IF NOT EXISTS sellable boolean NOT NULL DEFAULT false;
+
+-- ============================================================
+-- RPC: Refresh daily connectivity dataset
+-- ============================================================
+
+CREATE OR REPLACE FUNCTION public.refresh_connectivity_daily(
+  p_start_date date,
+  p_end_date date
+)
+RETURNS void
+LANGUAGE plpgsql
+AS $$
+begin
+  insert into public.dataset_connectivity_daily (
+    date,
+    device_install_id,
+    user_id,
+    uptime_pct,
+    disconnect_count,
+    primary_network,
+    carrier,
+    platform,
+    consent_version,
+    sellable,
+    created_at
+  )
+  select
+    date(de.captured_at) as date,
+    de.device_install_id,
+    de.user_id,
+    round(
+      100.0 * avg(
+        case
+          when coalesce((de.payload_json->>'is_internet_reachable')::boolean, false) then 1
+          else 0
+        end
+      )::numeric,
+      2
+    ) as uptime_pct,
+    greatest(
+      count(*) filter (
+        where coalesce((de.payload_json->>'is_connected')::boolean, false) = false
+      ) - 1,
+      0
+    )::integer as disconnect_count,
+    mode() within group (
+      order by nullif(de.payload_json->>'network_type', '')
+    ) as primary_network,
+    mode() within group (
+      order by nullif(de.payload_json->>'carrier', '')
+    ) as carrier,
+    max(ud.platform) as platform,
+    max(de.consent_version) as consent_version,
+    bool_or(de.can_sell_snapshot) as sellable,
+    now() as created_at
+  from public.device_events de
+  join public.user_devices ud
+    on ud.device_install_id = de.device_install_id
+  where de.module_key = 'connectivity'
+    and date(de.captured_at) between p_start_date and p_end_date
+  group by
+    date(de.captured_at),
+    de.device_install_id,
+    de.user_id
+  on conflict (date, device_install_id)
+  do update set
+    user_id = excluded.user_id,
+    uptime_pct = excluded.uptime_pct,
+    disconnect_count = excluded.disconnect_count,
+    primary_network = excluded.primary_network,
+    carrier = excluded.carrier,
+    platform = excluded.platform,
+    consent_version = excluded.consent_version,
+    sellable = excluded.sellable,
+    created_at = excluded.created_at;
+end;
+$$;

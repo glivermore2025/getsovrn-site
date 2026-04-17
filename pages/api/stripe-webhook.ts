@@ -71,12 +71,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           return res.status(400).send('Missing dataset_id');
         }
 
-        // Record a single row in purchases to satisfy idempotency (you can also create a dedicated table)
+        const filterJson = (() => {
+          if (!session.metadata?.filter_json) return {};
+          try {
+            return JSON.parse(session.metadata.filter_json);
+          } catch (err) {
+            console.warn('⚠️ Could not parse filter_json metadata', err);
+            return {};
+          }
+        })();
+
         const { error: purchaseError } = await supabase.from('purchases').insert([{
           user_id: userId,
           listing_id: null,        // legacy column—nullable
           session_id: session.id,
           dataset_id: datasetId,   // if you added this column; otherwise remove
+          filter_json: filterJson,
         }]);
         if (purchaseError) {
           console.error('❌ Failed to insert purchase:', purchaseError);

@@ -25,11 +25,12 @@ function siteUrl(req: NextApiRequest) {
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method !== 'POST') return res.status(405).end('Method Not Allowed');
 
-  const { datasetId, listingId, userId, quantity } = req.body as {
+  const { datasetId, listingId, userId, quantity, filterJson } = req.body as {
     datasetId?: string;
     listingId?: string;
     userId?: string;
-    quantity?: number; // NEW
+    quantity?: number;
+    filterJson?: unknown;
   };
 
   if (!datasetId && !listingId) {
@@ -71,6 +72,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         return res.status(400).json({ error: 'Invalid dataset price' });
       }
 
+      const metadata: Record<string, string> = {
+        type: 'dataset',
+        dataset_id: ds.id,
+        user_id: userId,
+        quantity: String(safeQty),
+      };
+
+      if (filterJson !== undefined) {
+        metadata.filter_json = JSON.stringify(filterJson);
+      }
+
       const session = await stripe.checkout.sessions.create({
         mode: 'payment',
         payment_method_types: ['card'],
@@ -84,7 +96,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               },
               unit_amount: ds.unit_price_cents, // cents
             },
-            quantity: safeQty, // NEW
+            quantity: safeQty,
           },
         ],
         success_url: `${baseUrl}/success?session_id={CHECKOUT_SESSION_ID}`,
@@ -92,13 +104,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         customer_email: customerEmail,
         billing_address_collection: 'auto',
         allow_promotion_codes: true,
-        client_reference_id: `dataset:${ds.id}:user:${userId}:qty:${safeQty}`, // NEW
-        metadata: {
-          type: 'dataset',
-          dataset_id: ds.id,
-          user_id: userId,
-          quantity: String(safeQty), // NEW
-        },
+        client_reference_id: `dataset:${ds.id}:user:${userId}:qty:${safeQty}`,
+        metadata,
       });
 
       return res.status(200).json({ url: session.url });
