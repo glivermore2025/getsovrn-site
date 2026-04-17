@@ -90,6 +90,24 @@
       "namedRegex": "^/admin/users(?:/)?$"
     },
     {
+      "page": "/buyer",
+      "regex": "^/buyer(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/buyer(?:/)?$"
+    },
+    {
+      "page": "/buyer/data-purchasing",
+      "regex": "^/buyer/data\\-purchasing(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/buyer/data\\-purchasing(?:/)?$"
+    },
+    {
+      "page": "/buyer/purchased-data",
+      "regex": "^/buyer/purchased\\-data(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/buyer/purchased\\-data(?:/)?$"
+    },
+    {
       "page": "/buyer_posts/new",
       "regex": "^/buyer_posts/new(?:/)?$",
       "routeKeys": {},

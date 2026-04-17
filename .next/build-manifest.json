@@ -5,8 +5,8 @@
   "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [
-    "static/0EYNmsFeTmXFbPy0TsU4_/_buildManifest.js",
-    "static/0EYNmsFeTmXFbPy0TsU4_/_ssgManifest.js"
+    "static/qoD7pH1EWNtS8C_nT-axS/_buildManifest.js",
+    "static/qoD7pH1EWNtS8C_nT-axS/_ssgManifest.js"
   ],
   "rootMainFiles": [],
   "rootMainFilesTree": {},
@@ -21,7 +21,7 @@
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/css/45a23792451a3e56.css",
+      "static/css/c0ea4b37d974af86.css",
       "static/chunks/pages/_app-245d3913ae67e081.js"
     ],
     "/_error": [
@@ -61,6 +61,25 @@
       "static/chunks/main-afecb3a8de409724.js",
       "static/chunks/pages/admin/users-de042f31c93b1c60.js"
     ],
+    "/buyer": [
+      "static/chunks/webpack-62e4db7ac5b62f49.js",
+      "static/chunks/framework-d7de93249215fb06.js",
+      "static/chunks/main-afecb3a8de409724.js",
+      "static/chunks/pages/buyer-3b9deb8e6400dda1.js"
+    ],
+    "/buyer/data-purchasing": [
+      "static/chunks/webpack-62e4db7ac5b62f49.js",
+      "static/chunks/framework-d7de93249215fb06.js",
+      "static/chunks/main-afecb3a8de409724.js",
+      "static/chunks/149-2bca344d4b55e952.js",
+      "static/chunks/pages/buyer/data-purchasing-8c5b0799e3038a28.js"
+    ],
+    "/buyer/purchased-data": [
+      "static/chunks/webpack-62e4db7ac5b62f49.js",
+      "static/chunks/framework-d7de93249215fb06.js",
+      "static/chunks/main-afecb3a8de409724.js",
+      "static/chunks/pages/buyer/purchased-data-6a377c694bd2fc94.js"
+    ],
     "/buyer_posts/[id]": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
@@ -83,8 +102,7 @@
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/chunks/149-2bca344d4b55e952.js",
-      "static/chunks/pages/connectivity-9e6541ea1181eed9.js"
+      "static/chunks/pages/connectivity-782dc4413584e375.js"
     ],
     "/dashboard": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
