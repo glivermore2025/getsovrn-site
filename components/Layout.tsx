@@ -17,6 +17,14 @@ export default function Layout({ children }: { children: React.ReactNode }) {
     router.push('/');
   };
 
+  const handleAccountClick = () => {
+    if (user) {
+      router.push('/profile');
+    } else {
+      router.push('/login');
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-900 to-black text-white">
       <header className="relative flex justify-between items-center p-6 border-b border-gray-800">
@@ -49,7 +57,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </div>
             </div>
 
-            <Link href="/profile" className="hover:text-blue-400">Account</Link>
+            <button onClick={handleAccountClick} className="hover:text-blue-400 bg-transparent border-none cursor-pointer">
+              Account
+            </button>
           </nav>
 
           <div className="flex items-center space-x-4">
