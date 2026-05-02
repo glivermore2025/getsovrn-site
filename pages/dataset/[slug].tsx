@@ -153,14 +153,14 @@ export default function DatasetDetail() {
   };
 
   if (pageLoading) {
-    return <div className="p-8 text-white">Loading…</div>;
+    return <div className="p-4 md:p-8 text-white">Loading…</div>;
   }
   if (errMsg || !dataset) {
-    return <div className="p-8 text-red-400">{errMsg || 'Dataset not found.'}</div>;
+    return <div className="p-4 md:p-8 text-red-400">{errMsg || 'Dataset not found.'}</div>;
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
       <Head><title>{dataset.name} – Sovrn</title></Head>
 
       <h1 className="text-3xl font-bold mb-2">{dataset.name}</h1>

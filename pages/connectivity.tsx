@@ -9,7 +9,7 @@ export default function ConnectivityRedirectPage() {
   }, [router]);
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
       <div className="max-w-3xl mx-auto rounded-3xl border border-gray-800 bg-gray-900 p-8 text-center">
         <h1 className="text-3xl font-bold">Redirecting to Buyer Portal…</h1>
         <p className="mt-4 text-gray-400">

@@ -538,7 +538,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="min-h-screen bg-gray-950 text-white p-8">
+    <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
       <Head><title>Dashboard – Sovrn</title></Head>
 
       <h1 className="text-3xl font-bold mb-2">Dashboard</h1>

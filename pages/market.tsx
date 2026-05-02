@@ -219,7 +219,7 @@ export default function Markets() {
   }, [topDatasets, salesByDataset]);
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white p-8">
+    <div className="min-h-screen bg-slate-950 text-white p-4 md:p-8">
       <Head>
         <title>Markets – Sovrn</title>
       </Head>
