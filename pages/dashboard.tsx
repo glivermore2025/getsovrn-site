@@ -5,6 +5,8 @@ import { v4 as uuidv4 } from 'uuid';
 import Papa from 'papaparse';
 import { getUserListings } from '../utils/fetchListings';
 import { useAuth } from '../lib/authContext';
+import ContributionStatusCard from '../components/consumer/ContributionStatusCard';
+import ConsentCategoryCard from '../components/consumer/ConsentCategoryCard';
 
 type Module = {
   key: string;
@@ -521,6 +523,13 @@ export default function Dashboard() {
     0
   );
 
+  const contributionLabel = snapshots.length > 0 ? 'Active contributor' : 'No contributions yet';
+  const latestSnapshotDate = snapshots.length > 0 ? new Date(snapshots[0].collected_at).toLocaleDateString() : 'Not synced';
+  const contributionCategories = modules.filter(
+    (m) => permissions[m.key]?.can_collect || permissions[m.key]?.can_sell
+  ).length;
+  const marketplaceStatus = listings.length > 0 ? 'Marketplace participation active' : 'Not participating yet';
+
   const tabs: { key: 'device' | 'rights' | 'seller' | 'buyer'; label: string }[] = [
     { key: 'device', label: 'My Device Data' },
     { key: 'rights', label: 'Data Rights' },
@@ -534,6 +543,42 @@ export default function Dashboard() {
 
       <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
       <p className="text-gray-400 text-sm mb-8">Review your synced data, manage rights, and run your marketplace.</p>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
+        <ContributionStatusCard
+          title="Contribution status"
+          value={contributionLabel}
+          description={`Last sync: ${latestSnapshotDate}`}
+        />
+        <ContributionStatusCard
+          title="Data categories"
+          value={`${contributionCategories} enabled`}
+          description="Choose what you share and what stays private."
+        />
+        <ContributionStatusCard
+          title="Estimated value"
+          value={`$${(totalMonthlyEstimate / 100).toFixed(2)}/mo`}
+          description="Potential earnings from active consented data categories."
+        />
+        <ContributionStatusCard
+          title="Marketplace status"
+          value={marketplaceStatus}
+          description="Track your contribution visibility for buyers."
+        />
+      </div>
+
+      <div className="grid gap-4 sm:grid-cols-2 mb-8">
+        <ConsentCategoryCard
+          label="Device & Connectivity Data"
+          description="Network and device context used in anonymized reports."
+          enabled={approvals.device_info ?? false}
+        />
+        <ConsentCategoryCard
+          label="General Location / Mobility Signals"
+          description="Aggregated local movement patterns, not raw GPS tracks."
+          enabled={permissions.activity_rhythm?.can_collect ?? false}
+        />
+      </div>
 
       <div className="flex mb-8 gap-2 border-b border-gray-800 pb-0">
         {tabs.map((tab) => (

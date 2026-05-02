@@ -44,12 +44,15 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             >
               <Link href="/buyer" className="hover:text-blue-400">Buyer</Link>
               <div
-                className={`absolute right-0 mt-2 w-56 rounded-2xl border border-gray-800 bg-gray-950 shadow-xl transition-opacity duration-200 ${
+                className={`absolute right-0 mt-2 w-64 rounded-2xl border border-gray-800 bg-gray-950 shadow-xl transition-opacity duration-200 ${
                   buyerMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
                 }`}
               >
-                <Link href="/buyer/data-purchasing" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
-                  Data Purchasing
+                <Link href="/buyer/dashboard" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
+                  Buyer Dashboard
+                </Link>
+                <Link href="/buyer/marketplace" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
+                  Marketplace
                 </Link>
                 <Link href="/buyer/purchased-data" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
                   Purchased Data

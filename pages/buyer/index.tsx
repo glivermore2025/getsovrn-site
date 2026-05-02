@@ -10,31 +10,29 @@ export default function BuyerPortalPage() {
 
       <div className="max-w-5xl mx-auto space-y-8">
         <header className="rounded-3xl border border-gray-800 bg-gray-900 p-8 shadow-sm">
-          <h1 className="text-4xl font-bold">Buyer&apos;s Portal</h1>
+          <h1 className="text-4xl font-bold">Buyer Portal</h1>
           <p className="mt-3 text-gray-400 max-w-3xl text-lg">
-            Access the Data Purchasing workflow, review purchased datasets, and manage your buyer activity in one place.
+            Access Sovrn&apos;s curated data marketplace, preview safe aggregated datasets, and track buyer access requests.
           </p>
         </header>
 
-        <div className="grid gap-6 md:grid-cols-2">
-          <Link href="/buyer/data-purchasing" className="rounded-3xl border border-gray-800 bg-gray-900 p-8 transition hover:border-blue-500 hover:bg-gray-800">
-            <h2 className="text-2xl font-semibold">Data Purchasing</h2>
-            <p className="mt-3 text-gray-400">
-              Browse available dataset previews, apply filters, and purchase the exact dataset slice you need.
-            </p>
-            <div className="mt-6 inline-flex items-center gap-2 text-blue-400 font-semibold">
-              Go to Data Purchasing →
-            </div>
+        <div className="grid gap-6 md:grid-cols-3">
+          <Link href="/buyer/marketplace" className="rounded-3xl border border-gray-800 bg-gray-900 p-8 transition hover:border-blue-500 hover:bg-gray-800">
+            <h2 className="text-2xl font-semibold">Marketplace</h2>
+            <p className="mt-3 text-gray-400">Browse curated data products with buyer-focused coverage, quality, and pricing summaries.</p>
+            <div className="mt-6 inline-flex items-center gap-2 text-blue-400 font-semibold">Explore marketplace →</div>
+          </Link>
+
+          <Link href="/buyer/dashboard" className="rounded-3xl border border-gray-800 bg-gray-900 p-8 transition hover:border-blue-500 hover:bg-gray-800">
+            <h2 className="text-2xl font-semibold">Buyer Dashboard</h2>
+            <p className="mt-3 text-gray-400">Review your access requests, approved datasets, and buyer activity in one place.</p>
+            <div className="mt-6 inline-flex items-center gap-2 text-blue-400 font-semibold">View dashboard →</div>
           </Link>
 
           <Link href="/buyer/purchased-data" className="rounded-3xl border border-gray-800 bg-gray-900 p-8 transition hover:border-blue-500 hover:bg-gray-800">
             <h2 className="text-2xl font-semibold">Purchased Data</h2>
-            <p className="mt-3 text-gray-400">
-              Review your completed purchases and download any available dataset exports.
-            </p>
-            <div className="mt-6 inline-flex items-center gap-2 text-blue-400 font-semibold">
-              View Purchased Data →
-            </div>
+            <p className="mt-3 text-gray-400">Download available dataset exports and review the data you have purchased.</p>
+            <div className="mt-6 inline-flex items-center gap-2 text-blue-400 font-semibold">Manage purchases →</div>
           </Link>
         </div>
       </div>

@@ -28,6 +28,14 @@
       "namedRegex": "^/api/session/(?<nxtPid>[^/]+?)(?:/)?$"
     },
     {
+      "page": "/buyer/datasets/[slug]",
+      "regex": "^/buyer/datasets/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPslug": "nxtPslug"
+      },
+      "namedRegex": "^/buyer/datasets/(?<nxtPslug>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/buyer_posts/[id]",
       "regex": "^/buyer_posts/([^/]+?)(?:/)?$",
       "routeKeys": {
@@ -66,6 +74,18 @@
       "namedRegex": "^/admin(?:/)?$"
     },
     {
+      "page": "/admin/buyer-requests",
+      "regex": "^/admin/buyer\\-requests(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/buyer\\-requests(?:/)?$"
+    },
+    {
+      "page": "/admin/data-products",
+      "regex": "^/admin/data\\-products(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/admin/data\\-products(?:/)?$"
+    },
+    {
       "page": "/admin/listings",
       "regex": "^/admin/listings(?:/)?$",
       "routeKeys": {},
@@ -96,10 +116,22 @@
       "namedRegex": "^/buyer(?:/)?$"
     },
     {
+      "page": "/buyer/dashboard",
+      "regex": "^/buyer/dashboard(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/buyer/dashboard(?:/)?$"
+    },
+    {
       "page": "/buyer/data-purchasing",
       "regex": "^/buyer/data\\-purchasing(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/buyer/data\\-purchasing(?:/)?$"
+    },
+    {
+      "page": "/buyer/marketplace",
+      "regex": "^/buyer/marketplace(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/buyer/marketplace(?:/)?$"
     },
     {
       "page": "/buyer/purchased-data",

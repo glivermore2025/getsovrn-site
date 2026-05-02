@@ -102,6 +102,175 @@ CREATE POLICY "Users see own connectivity data"
   USING (auth.uid() = user_id);
 
 -- ============================================================
+-- BUYER MARKETPLACE MODELS
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS dataset_local_activity_daily (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  date date NOT NULL,
+  market text NOT NULL,
+  zip_code text NOT NULL,
+  daypart text NOT NULL,
+  activity_category text NOT NULL,
+  estimated_activity_index numeric,
+  sample_size integer,
+  confidence_score numeric,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS data_products (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  name text NOT NULL,
+  slug text NOT NULL UNIQUE,
+  description text NOT NULL,
+  category text NOT NULL,
+  buyer_use_case text NOT NULL,
+  geography text NOT NULL,
+  coverage_area text NOT NULL,
+  data_sources text[] NOT NULL DEFAULT '{}'::text[],
+  aggregation_level text NOT NULL,
+  refresh_frequency text NOT NULL,
+  freshness_date date,
+  sample_size integer,
+  record_count bigint,
+  contributor_count integer,
+  quality_score numeric,
+  confidence_score numeric,
+  privacy_level text NOT NULL,
+  price_cents integer,
+  pricing_model text NOT NULL DEFAULT 'request_quote',
+  status text NOT NULL DEFAULT 'active',
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS buyer_access_requests (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  buyer_id uuid NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
+  data_product_id uuid NOT NULL REFERENCES data_products(id) ON DELETE CASCADE,
+  status text NOT NULL DEFAULT 'pending',
+  requested_use_case text,
+  buyer_notes text,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS buyer_dataset_samples (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  data_product_slug text NOT NULL REFERENCES data_products(slug) ON DELETE CASCADE,
+  date date NOT NULL,
+  market text,
+  zip_code text,
+  daypart text,
+  category text,
+  device_os text,
+  network_type text,
+  avg_signal_quality numeric,
+  estimated_activity_index numeric,
+  sample_size integer,
+  confidence_score numeric,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+INSERT INTO data_products (
+  id, name, slug, description, category, buyer_use_case, geography, coverage_area,
+  data_sources, aggregation_level, refresh_frequency, freshness_date, sample_size,
+  record_count, contributor_count, quality_score, confidence_score, privacy_level,
+  price_cents, pricing_model, status, created_at, updated_at
+) VALUES
+  (
+    gen_random_uuid(),
+    'Houston Connectivity Quality Index',
+    'houston-connectivity-quality-index',
+    'Aggregated device connectivity signals across the Houston metro area, showing network type, signal quality, and device context by ZIP code and day.',
+    'Device & Connectivity',
+    'Network quality analysis, infrastructure planning, local market research',
+    'Houston Metro',
+    'Houston Metro',
+    ARRAY['device telemetry', 'carrier data', 'signal quality scores'],
+    'ZIP-code daily',
+    'Daily',
+    current_date,
+    2430,
+    1200000,
+    2430,
+    88,
+    92,
+    'Aggregated only',
+    150000,
+    'one_time',
+    'active',
+    now(),
+    now()
+  ),
+  (
+    gen_random_uuid(),
+    'Houston Local Activity Pulse',
+    'houston-local-activity-pulse',
+    'Aggregated local activity trends showing estimated movement and engagement patterns by ZIP code, daypart, and category.',
+    'Local Mobility',
+    'Retail site selection, event planning, local demand analysis',
+    'Houston Metro',
+    'Houston Metro',
+    ARRAY['mobile foot traffic', 'location signals', 'event indicators'],
+    'ZIP-code / daypart',
+    'Daily',
+    current_date,
+    1850,
+    850000,
+    1850,
+    84,
+    88,
+    'Aggregated only',
+    130000,
+    'one_time',
+    'active',
+    now(),
+    now()
+  ),
+  (
+    gen_random_uuid(),
+    'Houston Consumer Sentiment Panel',
+    'houston-consumer-sentiment-panel',
+    'Opted-in consumer survey and preference signals from verified local participants.',
+    'Consumer Pulse',
+    'Market research, product demand testing, local consumer insights',
+    'Houston Metro',
+    'Houston Metro',
+    ARRAY['survey responses', 'preference signals', 'demographic cohorts'],
+    'Survey cohort-level',
+    'Weekly',
+    current_date,
+    420,
+    200000,
+    420,
+    91,
+    94,
+    'Anonymized cohort',
+    95000,
+    'request_quote',
+    'active',
+    now(),
+    now()
+  )
+ON CONFLICT (slug) DO NOTHING;
+
+INSERT INTO buyer_dataset_samples (
+  id, data_product_slug, date, market, zip_code, daypart, category, device_os, network_type,
+  avg_signal_quality, estimated_activity_index, sample_size, confidence_score, created_at
+) VALUES
+  (gen_random_uuid(), 'houston-connectivity-quality-index', current_date - 3, 'Houston', '77002', NULL, NULL, 'iOS', 'wifi', 84.2, NULL, 140, 96, now()),
+  (gen_random_uuid(), 'houston-connectivity-quality-index', current_date - 3, 'Houston', '77003', NULL, NULL, 'Android', 'cellular', 79.5, NULL, 125, 91, now()),
+  (gen_random_uuid(), 'houston-connectivity-quality-index', current_date - 2, 'Houston', '77004', NULL, NULL, 'iOS', 'cellular', 87.1, NULL, 160, 94, now()),
+  (gen_random_uuid(), 'houston-local-activity-pulse', current_date - 3, 'Houston', '77005', 'morning', 'Retail', NULL, NULL, NULL, 72.4, 210, 92, now()),
+  (gen_random_uuid(), 'houston-local-activity-pulse', current_date - 3, 'Houston', '77007', 'afternoon', 'Event', NULL, NULL, NULL, 61.9, 190, 88, now()),
+  (gen_random_uuid(), 'houston-local-activity-pulse', current_date - 2, 'Houston', '77008', 'evening', 'Dining', NULL, NULL, NULL, 68.3, 230, 90, now()),
+  (gen_random_uuid(), 'houston-consumer-sentiment-panel', current_date - 2, 'Houston', '77002', NULL, 'Purchase intent', NULL, NULL, NULL, 76.5, 130, 93, now()),
+  (gen_random_uuid(), 'houston-consumer-sentiment-panel', current_date - 1, 'Houston', '77003', NULL, 'Brand awareness', NULL, NULL, NULL, 64.2, 145, 89, now()),
+  (gen_random_uuid(), 'houston-consumer-sentiment-panel', current_date - 1, 'Houston', '77004', NULL, 'Event intent', NULL, NULL, NULL, 81.7, 155, 95, now())
+ON CONFLICT (id) DO NOTHING;
+
+-- ============================================================
 -- LAYER 4: Value Engine
 -- ============================================================
 
