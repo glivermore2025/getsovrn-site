@@ -140,6 +140,12 @@
       "namedRegex": "^/buyer/purchased\\-data(?:/)?$"
     },
     {
+      "page": "/buyer/request-custom-dataset",
+      "regex": "^/buyer/request\\-custom\\-dataset(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/buyer/request\\-custom\\-dataset(?:/)?$"
+    },
+    {
       "page": "/buyer_posts/new",
       "regex": "^/buyer_posts/new(?:/)?$",
       "routeKeys": {},
@@ -168,6 +174,18 @@
       "regex": "^/data\\-rights(?:/)?$",
       "routeKeys": {},
       "namedRegex": "^/data\\-rights(?:/)?$"
+    },
+    {
+      "page": "/for-buyers",
+      "regex": "^/for\\-buyers(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/for\\-buyers(?:/)?$"
+    },
+    {
+      "page": "/for-consumers",
+      "regex": "^/for\\-consumers(?:/)?$",
+      "routeKeys": {},
+      "namedRegex": "^/for\\-consumers(?:/)?$"
     },
     {
       "page": "/forgot-password",

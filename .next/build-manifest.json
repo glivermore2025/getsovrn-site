@@ -5,8 +5,8 @@
   "devFiles": [],
   "ampDevFiles": [],
   "lowPriorityFiles": [
-    "static/cMY1tsaSNs3XpGHe2YFtS/_buildManifest.js",
-    "static/cMY1tsaSNs3XpGHe2YFtS/_ssgManifest.js"
+    "static/4T2AuWpMfEDhuqbIvXLlg/_buildManifest.js",
+    "static/4T2AuWpMfEDhuqbIvXLlg/_ssgManifest.js"
   ],
   "rootMainFiles": [],
   "rootMainFilesTree": {},
@@ -15,14 +15,14 @@
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/chunks/pages/index-ec64ae455b98dcd7.js"
+      "static/chunks/pages/index-484b115e684efcee.js"
     ],
     "/_app": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/css/be01b5b5757987f2.css",
-      "static/chunks/pages/_app-0ef219e8036fdecd.js"
+      "static/css/c151e4608cbb9640.css",
+      "static/chunks/pages/_app-c12b1a107c3a7097.js"
     ],
     "/_error": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
@@ -83,7 +83,7 @@
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/chunks/pages/buyer/dashboard-c5d493946af7cf1c.js"
+      "static/chunks/pages/buyer/dashboard-0a38e29edf4d01d6.js"
     ],
     "/buyer/data-purchasing": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
@@ -96,19 +96,25 @@
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/chunks/pages/buyer/datasets/[slug]-fadb4cd00619be66.js"
+      "static/chunks/pages/buyer/datasets/[slug]-659ad5c09d11a349.js"
     ],
     "/buyer/marketplace": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/chunks/pages/buyer/marketplace-7093f0c59dfd3ba8.js"
+      "static/chunks/pages/buyer/marketplace-3de5ae60e728841c.js"
     ],
     "/buyer/purchased-data": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
-      "static/chunks/pages/buyer/purchased-data-6a377c694bd2fc94.js"
+      "static/chunks/pages/buyer/purchased-data-5d725d83aaa7cd58.js"
+    ],
+    "/buyer/request-custom-dataset": [
+      "static/chunks/webpack-62e4db7ac5b62f49.js",
+      "static/chunks/framework-d7de93249215fb06.js",
+      "static/chunks/main-afecb3a8de409724.js",
+      "static/chunks/pages/buyer/request-custom-dataset-44a801355dc8268a.js"
     ],
     "/buyer_posts/[id]": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
@@ -139,7 +145,7 @@
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
       "static/chunks/583-8e9f01c564f98bfe.js",
-      "static/chunks/pages/dashboard-2a7be118cbddffd3.js"
+      "static/chunks/pages/dashboard-f68e26440a302c91.js"
     ],
     "/data-rights": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
@@ -153,6 +159,18 @@
       "static/chunks/main-afecb3a8de409724.js",
       "static/chunks/149-2bca344d4b55e952.js",
       "static/chunks/pages/dataset/[slug]-9c559b2bc6e59380.js"
+    ],
+    "/for-buyers": [
+      "static/chunks/webpack-62e4db7ac5b62f49.js",
+      "static/chunks/framework-d7de93249215fb06.js",
+      "static/chunks/main-afecb3a8de409724.js",
+      "static/chunks/pages/for-buyers-89629ad1f7e02cb1.js"
+    ],
+    "/for-consumers": [
+      "static/chunks/webpack-62e4db7ac5b62f49.js",
+      "static/chunks/framework-d7de93249215fb06.js",
+      "static/chunks/main-afecb3a8de409724.js",
+      "static/chunks/pages/for-consumers-bb49aa9d3b32a31a.js"
     ],
     "/forgot-password": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",
@@ -178,7 +196,7 @@
       "static/chunks/framework-d7de93249215fb06.js",
       "static/chunks/main-afecb3a8de409724.js",
       "static/chunks/533-e6058bd9dd9d60c9.js",
-      "static/chunks/pages/market-867f3cbe4de9f79b.js"
+      "static/chunks/pages/market-20a2d6cc131ad81d.js"
     ],
     "/marketplace": [
       "static/chunks/webpack-62e4db7ac5b62f49.js",

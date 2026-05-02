@@ -29,6 +29,8 @@ export default function DataProductFilters({
   useCase,
   refreshFrequency,
   aggregationLevel,
+  privacyLevel,
+  pricingModel,
   minPrice,
   maxPrice,
   minQuality,
@@ -37,6 +39,8 @@ export default function DataProductFilters({
   useCases,
   refreshFrequencies,
   aggregationLevels,
+  privacyLevels,
+  pricingModels,
   onChange,
 }: Props) {
   return (
