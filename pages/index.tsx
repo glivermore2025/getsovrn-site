@@ -93,9 +93,6 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="text-center text-gray-500 text-sm py-10 border-t border-gray-800">
-        &copy; {new Date().getFullYear()} Sovrn. All rights reserved.
-      </footer>
     </div>
   );
 }
