@@ -147,10 +147,25 @@ export default function BuyerDatasetDetailPage() {
               <p className="text-sm uppercase tracking-[0.3em] text-blue-400">{product.category}</p>
               <h1 className="mt-3 text-4xl font-bold">{product.name}</h1>
               <p className="mt-4 text-gray-400 max-w-3xl text-lg">{product.description}</p>
+              <p className="mt-4 rounded-3xl border border-blue-600 bg-blue-950/20 px-4 py-3 text-sm text-blue-200 max-w-xl">
+                Preview data is privacy-safe and aggregated. Buyers cannot access individual-level records from this page.
+              </p>
             </div>
-            <div className="rounded-3xl bg-gray-800 p-6 text-right">
-              <p className="text-xs uppercase tracking-[0.3em] text-gray-500">Price</p>
-              <p className="mt-3 text-3xl font-semibold text-white">{product.priceCents != null ? `$${(product.priceCents / 100).toFixed(0)}` : 'Quote'}</p>
+            <div className="rounded-3xl bg-gray-800 p-6 text-right space-y-4">
+              <div>
+                <p className="text-xs uppercase tracking-[0.3em] text-gray-500">Price</p>
+                <p className="mt-3 text-3xl font-semibold text-white">{product.priceCents != null ? `$${(product.priceCents / 100).toFixed(0)}` : 'Quote'}</p>
+              </div>
+              <div className="grid gap-3 text-left text-sm text-gray-300">
+                <div>
+                  <p className="text-gray-400">Pricing model</p>
+                  <p>{product.pricingModel.replaceAll('_', ' ')}</p>
+                </div>
+                <div>
+                  <p className="text-gray-400">Privacy</p>
+                  <p>{product.privacyLevel}</p>
+                </div>
+              </div>
             </div>
           </div>
         </section>
@@ -196,6 +211,12 @@ export default function BuyerDatasetDetailPage() {
               >
                 {accessStatus ? 'Access requested' : requesting ? 'Requesting…' : 'Request access'}
               </button>
+              <a
+                href="/buyer/request-custom-dataset"
+                className="block text-center rounded-full border border-gray-700 bg-transparent px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800"
+              >
+                Request a custom dataset
+              </a>
               {accessStatus && (
                 <p className="text-sm text-gray-400">Current request status: {accessStatus}</p>
               )}

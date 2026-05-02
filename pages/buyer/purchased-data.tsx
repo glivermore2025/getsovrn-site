@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
 import { getSupabaseClient } from '../../lib/supabaseClient';
+import { useAuth } from '../../lib/authContext';
 
 interface Listing {
   title: string;
@@ -14,23 +15,19 @@ interface Purchase {
 }
 
 export default function BuyerPurchasedDataPage() {
+  const { user, loading: authLoading } = useAuth();
   const [purchases, setPurchases] = useState<Purchase[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = getSupabaseClient();
 
   useEffect(() => {
+    if (!user) {
+      setLoading(false);
+      return;
+    }
+
     const fetchPurchases = async () => {
-      const {
-        data: { user },
-        error: userError,
-      } = await supabase.auth.getUser();
-
-      if (userError || !user) {
-        console.error('User not authenticated:', userError);
-        setLoading(false);
-        return;
-      }
-
+      setLoading(true);
       const { data, error } = await supabase
         .from('purchases')
         .select(`
@@ -57,7 +54,7 @@ export default function BuyerPurchasedDataPage() {
     };
 
     fetchPurchases();
-  }, [supabase]);
+  }, [supabase, user]);
 
   const handleDownload = async (filePath: string) => {
     const { data, error } = await supabase.storage.from('datasets').createSignedUrl(filePath, 60);
@@ -84,10 +81,23 @@ export default function BuyerPurchasedDataPage() {
           </p>
         </header>
 
-        {loading ? (
-          <p>Loading purchases...</p>
+        {authLoading || loading ? (
+          <div className="flex items-center justify-center py-20">
+            <div className="w-6 h-6 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+          </div>
+        ) : !user ? (
+          <div className="rounded-3xl border border-dashed border-gray-800 bg-gray-900 p-12 text-center text-gray-400">
+            <p className="text-lg font-semibold text-white">Sign in to view your purchased datasets.</p>
+            <p className="mt-3">Visit the buyer dashboard or marketplace to request access to new data products.</p>
+          </div>
         ) : purchases.length === 0 ? (
-          <p>No purchases found.</p>
+          <div className="rounded-3xl border border-dashed border-gray-800 bg-gray-900 p-12 text-center text-gray-400">
+            <p className="text-lg font-semibold text-white">No purchases found.</p>
+            <p className="mt-3">Once your access requests are approved, approved exports will appear here.</p>
+            <a href="/buyer/marketplace" className="mt-6 inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+              Browse Marketplace
+            </a>
+          </div>
         ) : (
           <ul className="space-y-4">
             {purchases.map((purchase, i) => (

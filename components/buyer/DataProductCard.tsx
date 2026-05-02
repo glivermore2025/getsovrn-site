@@ -39,6 +39,14 @@ export default function DataProductCard({ product, requested, onRequestAccess, l
             <p className="text-gray-400">Price</p>
             <p className="text-white font-semibold">{priceLabel}</p>
           </div>
+          <div>
+            <p className="text-gray-400">Pricing model</p>
+            <p>{product.pricingModel.replaceAll('_', ' ')}</p>
+          </div>
+          <div>
+            <p className="text-gray-400">Privacy</p>
+            <p>{product.privacyLevel}</p>
+          </div>
         </div>
         <div className="mb-4">
           <DataQualityPanel product={product} />

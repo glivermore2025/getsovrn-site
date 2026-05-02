@@ -7,6 +7,8 @@ interface Props {
   useCase: string;
   refreshFrequency: string;
   aggregationLevel: string;
+  privacyLevel: string;
+  pricingModel: string;
   minPrice: string;
   maxPrice: string;
   minQuality: string;
@@ -15,6 +17,8 @@ interface Props {
   useCases: string[];
   refreshFrequencies: string[];
   aggregationLevels: string[];
+  privacyLevels: string[];
+  pricingModels: string[];
   onChange: (field: string, value: string) => void;
 }
 
@@ -96,6 +100,28 @@ export default function DataProductFilters({
       >
         <option value="all">Any aggregation</option>
         {aggregationLevels.map((item) => (
+          <option key={item} value={item}>{item}</option>
+        ))}
+      </select>
+
+      <select
+        value={privacyLevel}
+        onChange={(e) => onChange('privacyLevel', e.target.value)}
+        className="bg-gray-900 border border-gray-800 rounded-3xl px-4 py-3 text-sm text-white"
+      >
+        <option value="all">Any privacy level</option>
+        {privacyLevels.map((item) => (
+          <option key={item} value={item}>{item}</option>
+        ))}
+      </select>
+
+      <select
+        value={pricingModel}
+        onChange={(e) => onChange('pricingModel', e.target.value)}
+        className="bg-gray-900 border border-gray-800 rounded-3xl px-4 py-3 text-sm text-white"
+      >
+        <option value="all">Any pricing model</option>
+        {pricingModels.map((item) => (
           <option key={item} value={item}>{item}</option>
         ))}
       </select>

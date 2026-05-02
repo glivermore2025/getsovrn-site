@@ -48,6 +48,24 @@ export interface BuyerAccessRequest {
   data_products?: DataProduct;
 }
 
+export interface CustomDatasetRequest {
+  id: string;
+  buyer_id: string | null;
+  buyer_name: string;
+  company_name: string;
+  email: string;
+  target_geography: string;
+  data_category: string;
+  use_case: string;
+  refresh_cadence: string;
+  aggregation_level: string;
+  timeline: string;
+  budget_range?: string;
+  notes?: string;
+  status: 'new' | 'in_review' | 'approved' | 'rejected';
+  created_at: string;
+}
+
 export interface DataProductSampleRow {
   id: string;
   data_product_slug: string;

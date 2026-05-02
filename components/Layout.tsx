@@ -34,8 +34,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
         <div className="flex items-center space-x-8">
           <nav className="flex items-center space-x-8 text-base font-medium">
-            <Link href="/market" className="hover:text-blue-400">Markets</Link>
-            <Link href="/dashboard" className="hover:text-blue-400">Seller</Link>
+            <Link href="/market" className="hover:text-blue-400">Market Signals</Link>
+            <Link href="/for-consumers" className="hover:text-blue-400">For Consumers</Link>
+            <Link href="/for-buyers" className="hover:text-blue-400">For Buyers</Link>
 
             <div
               className="relative"
@@ -54,8 +55,8 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 <Link href="/buyer/marketplace" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
                   Marketplace
                 </Link>
-                <Link href="/buyer/purchased-data" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
-                  Purchased Data
+                <Link href="/buyer/request-custom-dataset" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
+                  Request Custom Dataset
                 </Link>
               </div>
             </div>

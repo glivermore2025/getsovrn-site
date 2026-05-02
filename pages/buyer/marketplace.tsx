@@ -18,6 +18,8 @@ export default function BuyerMarketplacePage() {
   const [useCase, setUseCase] = useState('all');
   const [refreshFrequency, setRefreshFrequency] = useState('all');
   const [aggregationLevel, setAggregationLevel] = useState('all');
+  const [privacyLevel, setPrivacyLevel] = useState('all');
+  const [pricingModel, setPricingModel] = useState('all');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minQuality, setMinQuality] = useState('');
@@ -34,6 +36,8 @@ export default function BuyerMarketplacePage() {
       if (useCase !== 'all' && product.buyerUseCase !== useCase) return false;
       if (refreshFrequency !== 'all' && product.refreshFrequency !== refreshFrequency) return false;
       if (aggregationLevel !== 'all' && product.aggregationLevel !== aggregationLevel) return false;
+      if (privacyLevel !== 'all' && product.privacyLevel !== privacyLevel) return false;
+      if (pricingModel !== 'all' && product.pricingModel !== pricingModel) return false;
       if (search) {
         const normalized = search.toLowerCase();
         if (
@@ -70,6 +74,14 @@ export default function BuyerMarketplacePage() {
   );
   const aggregationLevels = useMemo(
     () => Array.from(new Set(products.map((product) => product.aggregationLevel))),
+    [products]
+  );
+  const privacyLevels = useMemo(
+    () => Array.from(new Set(products.map((product) => product.privacyLevel))),
+    [products]
+  );
+  const pricingModels = useMemo(
+    () => Array.from(new Set(products.map((product) => product.pricingModel))),
     [products]
   );
 
@@ -166,11 +178,18 @@ export default function BuyerMarketplacePage() {
 
       <div className="max-w-6xl mx-auto space-y-6">
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8 shadow-sm">
-          <h1 className="text-4xl font-bold">Buyer Marketplace</h1>
-          <p className="mt-3 text-gray-400 max-w-3xl text-lg">
-            Browse premium local data products with clear coverage, freshness, privacy, and buyer use cases.
-            Request access to the datasets you want to evaluate or purchase.
-          </p>
+          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+            <div>
+              <h1 className="text-4xl font-bold">Buyer Marketplace</h1>
+              <p className="mt-3 text-gray-400 max-w-3xl text-lg">
+                Browse premium local data products with clear coverage, freshness, privacy, and buyer use cases.
+                Request access to the datasets you want to evaluate or purchase.
+              </p>
+            </div>
+            <div className="rounded-3xl border border-blue-600 bg-blue-950/30 px-5 py-4 text-sm text-blue-200">
+              Pilot marketplace preview with privacy-safe aggregated dataset samples.
+            </div>
+          </div>
         </section>
 
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8">
@@ -181,6 +200,8 @@ export default function BuyerMarketplacePage() {
             useCase={useCase}
             refreshFrequency={refreshFrequency}
             aggregationLevel={aggregationLevel}
+            privacyLevel={privacyLevel}
+            pricingModel={pricingModel}
             minPrice={minPrice}
             maxPrice={maxPrice}
             minQuality={minQuality}
@@ -189,6 +210,8 @@ export default function BuyerMarketplacePage() {
             useCases={useCases}
             refreshFrequencies={refreshFrequencies}
             aggregationLevels={aggregationLevels}
+            privacyLevels={privacyLevels}
+            pricingModels={pricingModels}
             onChange={(field, value) => {
               switch (field) {
                 case 'search': setSearch(value); break;
@@ -197,6 +220,8 @@ export default function BuyerMarketplacePage() {
                 case 'useCase': setUseCase(value); break;
                 case 'refreshFrequency': setRefreshFrequency(value); break;
                 case 'aggregationLevel': setAggregationLevel(value); break;
+                case 'privacyLevel': setPrivacyLevel(value); break;
+                case 'pricingModel': setPricingModel(value); break;
                 case 'minPrice': setMinPrice(value); break;
                 case 'maxPrice': setMaxPrice(value); break;
                 case 'minQuality': setMinQuality(value); break;

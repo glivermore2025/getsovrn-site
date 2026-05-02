@@ -55,6 +55,25 @@ export default function BuyerDashboardPage() {
           </p>
         </section>
 
+        <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-2xl font-semibold">Next steps</h2>
+              <p className="mt-3 text-gray-400 max-w-2xl">
+                Continue the buyer journey with our curated marketplace or submit a custom dataset request if you need tailored coverage.
+              </p>
+            </div>
+            <div className="flex flex-wrap gap-3">
+              <a href="/buyer/marketplace" className="rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+                Browse Marketplace
+              </a>
+              <a href="/buyer/request-custom-dataset" className="rounded-full border border-gray-700 bg-transparent px-5 py-3 text-sm font-semibold text-white hover:bg-gray-800">
+                Request Custom Dataset
+              </a>
+            </div>
+          </div>
+        </section>
+
         <section className="grid gap-4 sm:grid-cols-3">
           {['pending', 'approved', 'rejected', 'active'].map((status) => (
             <div key={status} className="rounded-3xl border border-gray-800 bg-gray-900 p-6">

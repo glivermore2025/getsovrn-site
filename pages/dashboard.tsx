@@ -542,7 +542,7 @@ export default function Dashboard() {
       <Head><title>Dashboard – Sovrn</title></Head>
 
       <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-      <p className="text-gray-400 text-sm mb-8">Review your synced data, manage rights, and run your marketplace.</p>
+      <p className="text-gray-400 text-sm mb-8">Review your consented contributions, manage data permissions, and see how your opted-in signals are used in the marketplace.</p>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
         <ContributionStatusCard

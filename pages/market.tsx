@@ -227,11 +227,11 @@ export default function Markets() {
       <section className="mb-10 rounded-3xl border border-gray-800 bg-[#050b16] p-8 shadow-xl">
         <div className="flex flex-col gap-6 lg:flex-row lg:items-end lg:justify-between">
           <div className="max-w-2xl">
-            <p className="text-sm uppercase tracking-[0.3em] text-blue-300">Market Analytics</p>
-            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Data Demand Markets</h1>
+            <p className="text-sm uppercase tracking-[0.3em] text-blue-300">Market Signals</p>
+            <h1 className="mt-3 text-4xl font-bold tracking-tight text-white">Demand and pricing for consent-based datasets</h1>
             <p className="mt-4 max-w-2xl text-gray-400 leading-relaxed">
-              Explore real-time economics for dataset demand, pricing momentum, and opt-in value trends.
-              This finance-style dashboard surfaces the hottest dataset categories, price movements, and market pressure.
+              See pilot marketplace demand trends, pricing momentum, and buyer interest in aggregated opt-in data products.
+              This dashboard helps buyers and contributors understand the marketplace direction.
             </p>
           </div>
 
