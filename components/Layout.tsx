@@ -48,7 +48,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </button>
 
         {/* Desktop navigation */}
-        <div className="hidden md:flex items-center justify-between w-full">
+        <div className="hidden md:flex flex-1 items-center justify-end space-x-6">
           <nav className="flex items-center space-x-8 text-base font-medium">
             <Link href="/#how-it-works" className="hover:text-blue-400">How It Works</Link>
             <Link href="/for-consumers" className="hover:text-blue-400">For Sellers</Link>
