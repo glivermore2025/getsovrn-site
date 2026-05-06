@@ -1,5 +1,3 @@
-import { DataProductCategory, DataProduct } from '../../lib/types';
-
 interface Props {
   search: string;
   category: string;

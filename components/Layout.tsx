@@ -48,51 +48,39 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </button>
 
         {/* Desktop navigation */}
-        <div className="hidden md:flex items-center space-x-8">
+        <div className="hidden md:flex items-center justify-between w-full">
           <nav className="flex items-center space-x-8 text-base font-medium">
-            <Link href="/market" className="hover:text-blue-400">Market Signals</Link>
-            <Link href="/for-consumers" className="hover:text-blue-400">For Consumers</Link>
+            <Link href="/#how-it-works" className="hover:text-blue-400">How It Works</Link>
+            <Link href="/for-consumers" className="hover:text-blue-400">For Sellers</Link>
             <Link href="/for-buyers" className="hover:text-blue-400">For Buyers</Link>
-
-            <div
-              className="relative"
-              onMouseEnter={() => setBuyerMenuOpen(true)}
-              onMouseLeave={() => setBuyerMenuOpen(false)}
-            >
-              <Link href="/buyer" className="hover:text-blue-400">Buyer</Link>
-              <div
-                className={`absolute right-0 mt-2 w-64 rounded-2xl border border-gray-800 bg-gray-950 shadow-xl transition-opacity duration-200 ${
-                  buyerMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
-                }`}
-              >
-                <Link href="/buyer/dashboard" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
-                  Buyer Dashboard
-                </Link>
-                <Link href="/buyer/marketplace" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
-                  Marketplace
-                </Link>
-                <Link href="/buyer/request-custom-dataset" className="block px-4 py-3 text-sm text-white hover:bg-gray-900">
-                  Request Custom Dataset
-                </Link>
-              </div>
-            </div>
-
-            <button onClick={handleAccountClick} className="hover:text-blue-400 bg-transparent border-none cursor-pointer">
-              Account
-            </button>
+            <Link href="/market" className="hover:text-blue-400">Market Insights</Link>
           </nav>
 
           <div className="flex items-center space-x-4">
+            {user ? (
+              <>
+                <Link href="/dashboard" className="rounded-full border border-gray-700 bg-gray-950 px-4 py-2 text-sm font-medium text-white hover:border-blue-400 hover:text-blue-400 transition">
+                  Dashboard
+                </Link>
+                <button onClick={handleLogout} className="rounded-full bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 transition">
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="rounded-full px-4 py-2 text-sm font-medium text-white hover:text-blue-400 transition">
+                  Sign In
+                </Link>
+                <Link href="/" className="rounded-full bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 transition">
+                  Join Waitlist
+                </Link>
+              </>
+            )}
             {ADMIN_USER_IDS.includes(user?.id || '') && (
-              <Link href="/admin/metrics" className="bg-yellow-600 hover:bg-yellow-700 py-1 px-4 rounded">
+              <Link href="/admin/metrics" className="rounded-full bg-yellow-600 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-700 transition">
                 Admin
               </Link>
             )}
-            {user ? (
-              <button onClick={handleLogout} className="bg-red-600 hover:bg-red-700 py-2 px-5 rounded text-base font-medium">
-                Logout
-              </button>
-            ) : null}
           </div>
         </div>
       </header>
@@ -101,33 +89,43 @@ export default function Layout({ children }: { children: React.ReactNode }) {
       {mobileMenuOpen && (
         <div className="md:hidden bg-gray-950 border-b border-gray-800">
           <nav className="px-4 py-4 space-y-4">
-            <Link href="/market" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
-              Market Signals
+            <Link href="/#how-it-works" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
+              How It Works
             </Link>
             <Link href="/for-consumers" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
-              For Consumers
+              For Sellers
             </Link>
             <Link href="/for-buyers" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
               For Buyers
             </Link>
-            <Link href="/buyer" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
-              Buyer
+            <Link href="/market" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
+              Market Insights
             </Link>
-            <button onClick={() => { handleAccountClick(); setMobileMenuOpen(false); }} className="block text-base font-medium hover:text-blue-400 bg-transparent border-none cursor-pointer text-left">
-              Account
-            </button>
-
+            {user ? (
+              <>
+                <Link href="/dashboard" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
+                  Dashboard
+                </Link>
+                <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="w-full text-left text-base font-medium hover:text-blue-400 bg-transparent border-none cursor-pointer">
+                  Sign Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link href="/login" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
+                  Sign In
+                </Link>
+                <Link href="/" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
+                  Join Waitlist
+                </Link>
+              </>
+            )}
             <div className="pt-4 border-t border-gray-800 flex flex-col space-y-2">
               {ADMIN_USER_IDS.includes(user?.id || '') && (
                 <Link href="/admin/metrics" className="bg-yellow-600 hover:bg-yellow-700 py-2 px-4 rounded text-sm text-center" onClick={() => setMobileMenuOpen(false)}>
                   Admin
                 </Link>
               )}
-              {user ? (
-                <button onClick={() => { handleLogout(); setMobileMenuOpen(false); }} className="bg-red-600 hover:bg-red-700 py-2 px-4 rounded text-base font-medium">
-                  Logout
-                </button>
-              ) : null}
             </div>
           </nav>
         </div>
