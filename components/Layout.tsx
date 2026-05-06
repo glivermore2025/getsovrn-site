@@ -131,7 +131,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         </div>
       )}
 
-      <main className="p-4 md:p-8 max-w-5xl mx-auto">{children}</main>
+      <main className="p-4 md:p-8 max-w-screen-2xl mx-auto">{children}</main>
 
       <footer className="text-center text-gray-500 text-sm py-10 border-t border-gray-800">
         &copy; {new Date().getFullYear()} Sovrn. All rights reserved.

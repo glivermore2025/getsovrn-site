@@ -48,7 +48,7 @@ export default function Home() {
         <link rel="icon" href="/favicon.ico" />
       </Head>
 
-      <main className="max-w-7xl mx-auto px-6 py-16 lg:py-24">
+      <main className="max-w-screen-2xl mx-auto px-6 py-16 lg:py-24">
         <section className="grid gap-12 lg:grid-cols-[1.2fr_0.8fr] items-start">
           <div className="space-y-8">
             <div className="inline-flex items-center rounded-full border border-blue-500/20 bg-blue-500/10 px-4 py-2 text-sm text-blue-200">

@@ -251,7 +251,7 @@ export default function BuyerMarketplacePage() {
         <title>Buyer Marketplace – Sovrn</title>
       </Head>
 
-      <div className="max-w-7xl mx-auto space-y-6">
+      <div className="max-w-screen-2xl mx-auto space-y-6">
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
             <div>
