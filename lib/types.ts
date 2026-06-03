@@ -81,3 +81,61 @@ export interface DataProductSampleRow {
   sample_size?: number | null;
   confidence_score?: number | null;
 }
+
+// ============================================================
+// Canonical Data Model Types
+// ============================================================
+
+/**
+ * Module permission record — source of truth for collect/sell consent
+ */
+export interface ModulePermission {
+  id: string;
+  user_id: string;
+  device_install_id: string;
+  module_key: string;
+  can_collect: boolean;
+  can_sell: boolean;
+  consent_version: string;
+  updated_at: string;
+}
+
+/**
+ * Connectivity preview filters for buyer API
+ */
+export interface ConnectivityPreviewFilters {
+  dateFrom?: string;
+  dateTo?: string;
+  platforms?: string[];
+  carriers?: string[];
+  networkTypes?: string[];
+  uptimeMin?: number;
+  uptimeMax?: number;
+  disconnectMin?: number;
+  disconnectMax?: number;
+  limit?: number;
+}
+
+/**
+ * Connectivity preview row — aggregated, anonymized (no user_id/device_install_id)
+ */
+export interface ConnectivityPreviewRow {
+  date: string;
+  platform?: string | null;
+  carrier?: string | null;
+  primary_network?: string | null;
+  disconnect_count: number;
+  uptime_pct: number | null;
+}
+
+/**
+ * Dataset purchase metadata — stored in Stripe session
+ */
+export interface DatasetPurchaseMetadata {
+  type: 'dataset' | 'listing';
+  dataset_id?: string;
+  listing_id?: string;
+  user_id: string;
+  quantity?: number;
+  filter_json?: string;
+}

@@ -79,6 +79,9 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         quantity: String(safeQty),
       };
 
+      // Note: filter_json stored in metadata for now. 
+      // TODO: After adding filter_json and export_path columns to dataset_purchases,
+      // webhook should persist these for reproducible exports.
       if (filterJson !== undefined) {
         metadata.filter_json = JSON.stringify(filterJson);
       }

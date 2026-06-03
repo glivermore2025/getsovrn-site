@@ -36,26 +36,97 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
   if (event.type === 'checkout.session.completed') {
     const session = event.data.object as Stripe.Checkout.Session;
+    const sessionType = session.metadata?.type;
 
-    const userId = session.metadata?.user_id;
-    const listingId = session.metadata?.listing_id;
+    // ===== DATASET PURCHASE =====
+    if (sessionType === 'dataset') {
+      const datasetId = session.metadata?.dataset_id;
+      const userId = session.metadata?.user_id;
+      const quantity = session.metadata?.quantity ? parseInt(session.metadata.quantity, 10) : 1;
+      // Note: filter_json is in metadata but dataset_purchases doesn't have this column yet.
+      // TODO: Add filter_json, export_path columns to dataset_purchases for reproducible exports.
 
-    if (!userId || !listingId || !session.id) {
-      console.error('Missing metadata in session');
-      return res.status(400).end();
+      if (!datasetId || !userId || !session.id) {
+        console.error('Missing metadata in dataset purchase session:', {
+          datasetId,
+          userId,
+          sessionId: session.id,
+        });
+        return res.status(400).end();
+      }
+
+      // Calculate gross revenue from line items
+      let grossRevenueCents = 0;
+      if (session.line_items) {
+        const lineItems = await stripe.checkout.sessions.listLineItems(session.id);
+        for (const item of lineItems.data) {
+          if (item.price?.unit_amount) {
+            grossRevenueCents += item.price.unit_amount * (item.quantity || 1);
+          }
+        }
+      }
+
+      const { error } = await supabase.from('dataset_purchases').upsert(
+        [
+          {
+            dataset_id: datasetId,
+            buyer_user_id: userId,
+            stripe_session_id: session.id,
+            gross_revenue_cents: grossRevenueCents,
+            currency: session.currency || 'usd',
+          },
+        ],
+        {
+          onConflict: 'stripe_session_id',
+        }
+      );
+
+      if (error) {
+        console.error('Failed to insert dataset purchase:', error);
+        return res.status(500).end();
+      }
+
+      console.log('Dataset purchase recorded:', {
+        datasetId,
+        userId,
+        sessionId: session.id,
+        grossRevenueCents,
+      });
     }
 
-    const { error } = await supabase.from('purchases').insert([
-      {
-        user_id: userId,
-        listing_id: listingId,
-        session_id: session.id,
-      },
-    ]);
+    // ===== LEGACY LISTING PURCHASE =====
+    else if (sessionType === 'listing') {
+      const userId = session.metadata?.user_id;
+      const listingId = session.metadata?.listing_id;
 
-    if (error) {
-      console.error('Failed to insert purchase:', error);
-      return res.status(500).end();
+      if (!userId || !listingId || !session.id) {
+        console.error('Missing metadata in listing purchase session');
+        return res.status(400).end();
+      }
+
+      const { error } = await supabase.from('purchases').insert([
+        {
+          user_id: userId,
+          listing_id: listingId,
+          session_id: session.id,
+        },
+      ]);
+
+      if (error) {
+        console.error('Failed to insert listing purchase:', error);
+        return res.status(500).end();
+      }
+
+      console.log('Listing purchase recorded:', {
+        userId,
+        listingId,
+        sessionId: session.id,
+      });
+    }
+
+    // ===== UNKNOWN TYPE =====
+    else {
+      console.warn('Unknown session type in webhook:', sessionType);
     }
   }
 

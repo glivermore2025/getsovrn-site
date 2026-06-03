@@ -60,14 +60,30 @@ CREATE TABLE IF NOT EXISTS device_events (
   module_key text NOT NULL REFERENCES modules(key),
   captured_at timestamptz NOT NULL DEFAULT now(),
   payload_json jsonb NOT NULL DEFAULT '{}'::jsonb,
-  consent_version text NOT NULL DEFAULT 'v1.0'
+  consent_version text NOT NULL DEFAULT 'v1.0',
+  can_sell_snapshot boolean NOT NULL DEFAULT false,
+  ingested_at timestamptz NOT NULL DEFAULT now()
 );
 
-CREATE INDEX IF NOT EXISTS idx_device_events_user_module
+-- Ensure required columns exist (safe for existing tables)
+ALTER TABLE IF EXISTS public.device_events
+  ADD COLUMN IF NOT EXISTS can_sell_snapshot boolean NOT NULL DEFAULT false;
+
+ALTER TABLE IF EXISTS public.device_events
+  ADD COLUMN IF NOT EXISTS ingested_at timestamptz NOT NULL DEFAULT now();
+
+-- Core indexes for device_events queries
+CREATE INDEX IF NOT EXISTS idx_device_events_module_captured
+  ON device_events (module_key, captured_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_device_events_user_module_captured
   ON device_events (user_id, module_key, captured_at DESC);
 
-CREATE INDEX IF NOT EXISTS idx_device_events_captured
-  ON device_events (captured_at DESC);
+CREATE INDEX IF NOT EXISTS idx_device_events_device_captured
+  ON device_events (device_install_id, captured_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_device_events_sellable_module_captured
+  ON device_events (can_sell_snapshot, module_key, captured_at DESC);
 
 ALTER TABLE device_events ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users see own events"
@@ -92,9 +108,22 @@ CREATE TABLE IF NOT EXISTS dataset_connectivity_daily (
   disconnect_count integer DEFAULT 0,
   primary_network text,
   carrier text,
+  platform text,
+  consent_version text,
+  sellable boolean NOT NULL DEFAULT false,
   created_at timestamptz NOT NULL DEFAULT now(),
   UNIQUE (date, device_install_id)
 );
+
+-- Ensure required columns exist (safe for existing tables)
+ALTER TABLE IF EXISTS public.dataset_connectivity_daily
+  ADD COLUMN IF NOT EXISTS platform text;
+
+ALTER TABLE IF EXISTS public.dataset_connectivity_daily
+  ADD COLUMN IF NOT EXISTS consent_version text;
+
+ALTER TABLE IF EXISTS public.dataset_connectivity_daily
+  ADD COLUMN IF NOT EXISTS sellable boolean NOT NULL DEFAULT false;
 
 ALTER TABLE dataset_connectivity_daily ENABLE ROW LEVEL SECURITY;
 CREATE POLICY "Users see own connectivity data"
@@ -355,23 +384,10 @@ ALTER TABLE IF EXISTS public.purchases
 ALTER TABLE IF EXISTS public.purchases
   ADD COLUMN IF NOT EXISTS export_path text;
 
-ALTER TABLE IF EXISTS public.dataset_purchases
-  ADD COLUMN IF NOT EXISTS filter_json jsonb NOT NULL DEFAULT '{}'::jsonb;
-
-ALTER TABLE IF EXISTS public.dataset_purchases
-  ADD COLUMN IF NOT EXISTS export_path text;
-
-ALTER TABLE IF EXISTS public.dataset_connectivity_daily
-  ADD COLUMN IF NOT EXISTS platform text;
-
-ALTER TABLE IF EXISTS public.dataset_connectivity_daily
-  ADD COLUMN IF NOT EXISTS consent_version text;
-
-ALTER TABLE IF EXISTS public.dataset_connectivity_daily
-  ADD COLUMN IF NOT EXISTS sellable boolean NOT NULL DEFAULT false;
-
 -- ============================================================
 -- RPC: Refresh daily connectivity dataset
+-- Source: device_events with module_key = 'connectivity'
+-- Transforms raw events into sellable dataset_connectivity_daily rows
 -- ============================================================
 
 CREATE OR REPLACE FUNCTION public.refresh_connectivity_daily(
@@ -414,19 +430,13 @@ begin
       ) - 1,
       0
     )::integer as disconnect_count,
-    mode() within group (
-      order by nullif(de.payload_json->>'network_type', '')
-    ) as primary_network,
-    mode() within group (
-      order by nullif(de.payload_json->>'carrier', '')
-    ) as carrier,
-    max(ud.platform) as platform,
+    (array_agg(distinct nullif(de.payload_json->>'network_type', '')) filter (where de.payload_json->>'network_type' is not null))[1] as primary_network,
+    (array_agg(distinct nullif(de.payload_json->>'carrier', '')) filter (where de.payload_json->>'carrier' is not null))[1] as carrier,
+    (array_agg(distinct nullif(de.payload_json->>'platform', '')) filter (where de.payload_json->>'platform' is not null))[1] as platform,
     max(de.consent_version) as consent_version,
     bool_or(de.can_sell_snapshot) as sellable,
     now() as created_at
   from public.device_events de
-  join public.user_devices ud
-    on ud.device_install_id = de.device_install_id
   where de.module_key = 'connectivity'
     and date(de.captured_at) between p_start_date and p_end_date
   group by
