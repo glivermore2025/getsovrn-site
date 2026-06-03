@@ -132,6 +132,11 @@ CREATE POLICY "Users see own connectivity data"
 
 -- ============================================================
 -- BUYER MARKETPLACE MODELS
+-- NOTE: DEFERRED — The primary buyer catalog is now `datasets`.
+-- These tables (data_products, buyer_dataset_samples) are kept for
+-- backwards compatibility but should not be the basis of new features.
+-- Future buyer data will be read from dataset_connectivity_daily and
+-- similar aggregated dataset tables, not from these legacy structures.
 -- ============================================================
 
 CREATE TABLE IF NOT EXISTS dataset_local_activity_daily (
@@ -438,6 +443,82 @@ begin
     now() as created_at
   from public.device_events de
   where de.module_key = 'connectivity'
+    and date(de.captured_at) between p_start_date and p_end_date
+  group by
+    date(de.captured_at),
+    de.device_install_id,
+    de.user_id
+  on conflict (date, device_install_id)
+  do update set
+    user_id = excluded.user_id,
+    uptime_pct = excluded.uptime_pct,
+    disconnect_count = excluded.disconnect_count,
+    primary_network = excluded.primary_network,
+    carrier = excluded.carrier,
+    platform = excluded.platform,
+    consent_version = excluded.consent_version,
+    sellable = excluded.sellable,
+    created_at = excluded.created_at;
+end;
+$$;
+
+-- ============================================================
+-- RPC: User-scoped refresh of daily connectivity dataset
+-- Allows users or their agents to refresh only their own connectivity data
+-- for a date range into dataset_connectivity_daily
+-- ============================================================
+
+create or replace function public.refresh_user_connectivity_daily(
+  p_user_id uuid,
+  p_start_date date,
+  p_end_date date
+)
+returns void
+language plpgsql
+security definer
+as $$
+begin
+  insert into public.dataset_connectivity_daily (
+    date,
+    device_install_id,
+    user_id,
+    uptime_pct,
+    disconnect_count,
+    primary_network,
+    carrier,
+    platform,
+    consent_version,
+    sellable,
+    created_at
+  )
+  select
+    date(de.captured_at) as date,
+    de.device_install_id,
+    de.user_id,
+    round(
+      100.0 * avg(
+        case
+          when coalesce((de.payload_json->>'is_internet_reachable')::boolean, false) then 1
+          else 0
+        end
+      )::numeric,
+      2
+    ) as uptime_pct,
+    greatest(
+      count(*) filter (
+        where coalesce((de.payload_json->>'is_connected')::boolean, false) = false
+      ) - 1,
+      0
+    )::integer as disconnect_count,
+    (array_agg(distinct nullif(de.payload_json->>'network_type', '')) filter (where de.payload_json->>'network_type' is not null))[1] as primary_network,
+    (array_agg(distinct nullif(de.payload_json->>'carrier', '')) filter (where de.payload_json->>'carrier' is not null))[1] as carrier,
+    (array_agg(distinct nullif(de.payload_json->>'platform', '')) filter (where de.payload_json->>'platform' is not null))[1] as platform,
+    max(de.consent_version) as consent_version,
+    bool_or(de.can_sell_snapshot) as sellable,
+    now() as created_at
+  from public.device_events de
+  where de.module_key = 'connectivity'
+    and de.user_id = p_user_id
     and date(de.captured_at) between p_start_date and p_end_date
   group by
     date(de.captured_at),

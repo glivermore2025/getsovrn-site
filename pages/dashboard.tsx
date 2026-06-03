@@ -7,6 +7,7 @@ import { getUserListings } from '../utils/fetchListings';
 import { useAuth } from '../lib/authContext';
 import ContributionStatusCard from '../components/consumer/ContributionStatusCard';
 import ConsentCategoryCard from '../components/consumer/ConsentCategoryCard';
+import { normalizeDeviceEventForSnapshot, getEventSummary, getColumnsForModule, getModuleLabel, NormalizedDeviceEvent } from '../lib/normalizeDeviceEvent';
 
 type Module = {
   key: string;
@@ -46,7 +47,8 @@ export default function Dashboard() {
   const [showModal, setShowModal] = useState(false);
 
   const [devices, setDevices] = useState<any[]>([]);
-  const [snapshots, setSnapshots] = useState<any[]>([]);
+  const [recentEvents, setRecentEvents] = useState<NormalizedDeviceEvent[]>([]);
+  const [marketplaceReadiness, setMarketplaceReadiness] = useState<any[]>([]);
   const [demographics, setDemographics] = useState<any>(null);
   const [consent, setConsent] = useState<any>(null);
   const [deviceDataLoading, setDeviceDataLoading] = useState(true);
@@ -127,18 +129,18 @@ export default function Dashboard() {
       setDeviceDataLoading(true);
       const supabase = getSupabaseClient();
 
-      const [devRes, snapRes, demoRes, consentRes] = await Promise.all([
+      const [devRes, eventsRes, demoRes, consentRes, readinessRes] = await Promise.all([
         supabase
           .from('user_devices')
           .select('*')
           .eq('user_id', user.id)
           .order('last_seen_at', { ascending: false }),
         supabase
-          .from('device_snapshots')
-          .select('*')
+          .from('device_events')
+          .select('id, module_key, captured_at, payload_json, consent_version, can_sell_snapshot, device_install_id')
           .eq('user_id', user.id)
-          .order('collected_at', { ascending: false })
-          .limit(20),
+          .order('captured_at', { ascending: false })
+          .limit(50),
         supabase
           .from('user_demographics')
           .select('*')
@@ -149,10 +151,21 @@ export default function Dashboard() {
           .select('*')
           .eq('user_id', user.id)
           .maybeSingle(),
+        supabase
+          .from('dataset_connectivity_daily')
+          .select('date, sellable, uptime_pct, disconnect_count, primary_network, carrier, platform, created_at')
+          .eq('user_id', user.id)
+          .order('date', { ascending: false })
+          .limit(10),
       ]);
 
       setDevices(devRes.data || []);
-      setSnapshots(snapRes.data || []);
+      
+      // Normalize device_events into a format suitable for display
+      const normalized = (eventsRes.data || []).map(normalizeDeviceEventForSnapshot);
+      setRecentEvents(normalized);
+      
+      setMarketplaceReadiness(readinessRes.data || []);
       setDemographics(demoRes.data || null);
       setConsent(consentRes.data || null);
 
@@ -523,8 +536,14 @@ export default function Dashboard() {
     0
   );
 
-  const contributionLabel = snapshots.length > 0 ? 'Active contributor' : 'No contributions yet';
-  const latestSnapshotDate = snapshots.length > 0 ? new Date(snapshots[0].collected_at).toLocaleDateString() : 'Not synced';
+  // Count events by module from recentEvents
+  const eventsByModule = recentEvents.reduce((acc: Record<string, number>, event) => {
+    acc[event.module_key] = (acc[event.module_key] || 0) + 1;
+    return acc;
+  }, {});
+
+  const contributionLabel = recentEvents.length > 0 ? 'Active contributor' : 'No contributions yet';
+  const latestSnapshotDate = recentEvents.length > 0 ? new Date(recentEvents[0].captured_at).toLocaleDateString() : 'Not synced';
   const contributionCategories = modules.filter(
     (m) => permissions[m.key]?.can_collect || permissions[m.key]?.can_sell
   ).length;
@@ -607,7 +626,9 @@ export default function Dashboard() {
       ) : activeTab === 'device' ? (
         <DeviceDataTab
           devices={devices}
-          snapshots={snapshots}
+          recentEvents={recentEvents}
+          marketplaceReadiness={marketplaceReadiness}
+          eventsByModule={eventsByModule}
           demographics={demographics}
           consent={consent}
           loading={deviceDataLoading}
@@ -616,6 +637,7 @@ export default function Dashboard() {
           saveApprovals={saveApprovals}
           savingApprovals={savingApprovals}
           approvalMsg={approvalMsg}
+          user={user}
         />
       ) : activeTab === 'rights' ? (
         <DataRightsTab
@@ -964,7 +986,9 @@ function DataRightsTab({
 
 function DeviceDataTab({
   devices,
-  snapshots,
+  recentEvents,
+  marketplaceReadiness,
+  eventsByModule,
   demographics,
   consent,
   loading,
@@ -973,9 +997,12 @@ function DeviceDataTab({
   saveApprovals,
   savingApprovals,
   approvalMsg,
+  user,
 }: {
   devices: any[];
-  snapshots: any[];
+  recentEvents: NormalizedDeviceEvent[];
+  marketplaceReadiness: any[];
+  eventsByModule: Record<string, number>;
   demographics: any;
   consent: any;
   loading: boolean;
@@ -984,7 +1011,37 @@ function DeviceDataTab({
   saveApprovals: () => void;
   savingApprovals: boolean;
   approvalMsg: string;
+  user: any;
 }) {
+  const [refreshing, setRefreshing] = useState(false);
+  const [refreshMsg, setRefreshMsg] = useState('');
+
+  const handleRefreshMarketplaceData = async () => {
+    if (!user) return;
+    setRefreshing(true);
+    setRefreshMsg('');
+    try {
+      const response = await fetch('/api/user/refresh-my-connectivity', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({}),
+      });
+      
+      if (!response.ok) {
+        const error = await response.json();
+        setRefreshMsg(`Refresh failed: ${error.error}`);
+      } else {
+        setRefreshMsg('Marketplace data refreshed successfully!');
+        // Optionally reload the page or re-fetch the data
+        setTimeout(() => setRefreshMsg(''), 3000);
+      }
+    } catch (error) {
+      console.error('Refresh error:', error);
+      setRefreshMsg('Failed to refresh marketplace data.');
+    }
+    setRefreshing(false);
+  };
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -993,7 +1050,7 @@ function DeviceDataTab({
     );
   }
 
-  const hasAnyData = devices.length > 0 || snapshots.length > 0 || demographics;
+  const hasAnyData = devices.length > 0 || recentEvents.length > 0 || demographics;
 
   if (!hasAnyData) {
     return (
@@ -1008,12 +1065,13 @@ function DeviceDataTab({
     );
   }
 
+  // Update approval items to use module-based event counts
   const approvalItems = [
     {
       key: 'device_info',
       label: 'Device Info',
       description: 'Model, OS, screen size, battery snapshots',
-      dataPoints: snapshots.length,
+      dataPoints: eventsByModule['device_health'] || 0,
     },
     {
       key: 'demographics',
@@ -1023,11 +1081,37 @@ function DeviceDataTab({
     },
     {
       key: 'usage_telemetry',
-      label: 'Usage Telemetry',
-      description: 'Network type, charging patterns',
-      dataPoints: snapshots.length,
+      label: 'Connectivity & Usage',
+      description: 'Network type, connectivity status',
+      dataPoints: eventsByModule['connectivity'] || 0,
     },
   ];
+
+  // Group recent events by module for display
+  const eventsByModuleList: { module: string; events: NormalizedDeviceEvent[] }[] = [];
+  const moduleCounts: Record<string, NormalizedDeviceEvent[]> = {};
+  recentEvents.forEach((event) => {
+    if (!moduleCounts[event.module_key]) {
+      moduleCounts[event.module_key] = [];
+    }
+    moduleCounts[event.module_key].push(event);
+  });
+  Object.entries(moduleCounts).forEach(([module, events]) => {
+    eventsByModuleList.push({ module, events });
+  });
+
+  const connectivityEventsCount = eventsByModule['connectivity'] || 0;
+  const connectivitySellableCount = recentEvents.filter((e) => e.module_key === 'connectivity' && e.can_sell_snapshot).length;
+  const lastConnectivityDate = recentEvents
+    .filter((e) => e.module_key === 'connectivity')
+    .map((e) => new Date(e.captured_at))
+    .sort((a, b) => b.getTime() - a.getTime())[0]
+    ?.toLocaleDateString() || 'N/A';
+
+  const marketplaceReady = marketplaceReadiness.length > 0;
+  const lastReadinessDate = marketplaceReady
+    ? new Date(marketplaceReadiness[0].date).toLocaleDateString()
+    : 'Not yet';
 
   return (
     <div className="space-y-8">
@@ -1180,72 +1264,125 @@ function DeviceDataTab({
         </div>
       )}
 
+      <div className="bg-gray-900 border border-gray-800 rounded-xl p-6">
+        <div className="flex items-center justify-between mb-4">
+          <div>
+            <h2 className="text-lg font-semibold">Marketplace Readiness</h2>
+            <p className="text-sm text-gray-400 mt-1">Shows whether your connectivity data has been transformed into buyable datasets.</p>
+          </div>
+          <button
+            onClick={handleRefreshMarketplaceData}
+            disabled={refreshing}
+            className="bg-blue-600 hover:bg-blue-700 disabled:opacity-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors"
+          >
+            {refreshing ? 'Refreshing...' : 'Refresh Now'}
+          </button>
+        </div>
+
+        {refreshMsg && (
+          <p className={`text-sm mb-4 ${refreshMsg.includes('failed') || refreshMsg.includes('Failed') ? 'text-red-400' : 'text-green-400'}`}>
+            {refreshMsg}
+          </p>
+        )}
+
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+            <p className="text-xs text-gray-400">Connectivity Events</p>
+            <p className="text-2xl font-bold text-green-400 mt-1">{connectivityEventsCount}</p>
+          </div>
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+            <p className="text-xs text-gray-400">Sellable</p>
+            <p className="text-2xl font-bold text-blue-400 mt-1">{connectivitySellableCount}</p>
+          </div>
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+            <p className="text-xs text-gray-400">Last Event</p>
+            <p className="text-sm text-gray-300 mt-1">{lastConnectivityDate}</p>
+          </div>
+          <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
+            <p className="text-xs text-gray-400">Buyer Ready</p>
+            <p className={`text-sm font-semibold mt-1 ${marketplaceReady ? 'text-green-400' : 'text-gray-500'}`}>
+              {marketplaceReady ? 'Yes ✓' : 'Pending'}
+            </p>
+            <p className="text-xs text-gray-500 mt-0.5">{lastReadinessDate}</p>
+          </div>
+        </div>
+
+        {marketplaceReady && (
+          <div className="mt-4 p-4 bg-green-500/10 border border-green-500/30 rounded-lg">
+            <p className="text-sm text-green-300">
+              ✓ Your connectivity data is ready! Buyers can preview and purchase aggregated datasets from your contributed data.
+            </p>
+          </div>
+        )}
+      </div>
+
       <div>
         <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold">Recent Snapshots</h2>
-          <span className="text-xs text-gray-500">{snapshots.length} records</span>
+          <h2 className="text-lg font-semibold">Recent Events</h2>
+          <span className="text-xs text-gray-500">{recentEvents.length} records</span>
         </div>
-        {snapshots.length === 0 ? (
+        {recentEvents.length === 0 ? (
           <div className="bg-gray-900 border border-gray-800 rounded-xl p-6 text-center">
-            <p className="text-gray-500">No snapshots synced yet.</p>
+            <p className="text-gray-500">No events synced yet.</p>
           </div>
         ) : (
-          <div className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead>
-                  <tr className="border-b border-gray-800 text-gray-400 text-left">
-                    <th className="px-4 py-3 font-medium">Date</th>
-                    <th className="px-4 py-3 font-medium">Battery</th>
-                    <th className="px-4 py-3 font-medium">Charging</th>
-                    <th className="px-4 py-3 font-medium">Network</th>
-                    <th className="px-4 py-3 font-medium">Screen</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {snapshots.map((s: any, i: number) => (
-                    <tr key={s.id || i} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
-                      <td className="px-4 py-3 text-gray-300">
-                        {s.collected_at ? new Date(s.collected_at).toLocaleString() : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {s.battery_level != null ? (
-                          <div className="flex items-center gap-2">
-                            <div className="w-16 h-1.5 bg-gray-700 rounded-full overflow-hidden">
-                              <div
-                                className={`h-full rounded-full ${
-                                  s.battery_level > 0.5 ? 'bg-green-500' :
-                                  s.battery_level > 0.2 ? 'bg-yellow-500' : 'bg-red-500'
-                                }`}
-                                style={{ width: `${Math.round(s.battery_level * 100)}%` }}
-                              />
-                            </div>
-                            <span className="text-gray-300">{Math.round(s.battery_level * 100)}%</span>
-                          </div>
-                        ) : '—'}
-                      </td>
-                      <td className="px-4 py-3">
-                        {s.is_charging != null ? (
-                          <span className={`text-xs px-2 py-0.5 rounded-full ${
-                            s.is_charging
-                              ? 'bg-green-500/20 text-green-400'
-                              : 'bg-gray-700 text-gray-400'
-                          }`}>
-                            {s.is_charging ? 'Yes' : 'No'}
-                          </span>
-                        ) : '—'}
-                      </td>
-                      <td className="px-4 py-3 text-gray-300">{s.network_type || '—'}</td>
-                      <td className="px-4 py-3 text-gray-300">
-                        {s.screen_width && s.screen_height
-                          ? `${s.screen_width}×${s.screen_height}`
-                          : '—'}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+          <div className="space-y-4">
+            {eventsByModuleList.map(({ module, events }) => {
+              const columns = getColumnsForModule(module);
+              return (
+                <div key={module} className="bg-gray-900 border border-gray-800 rounded-xl overflow-hidden">
+                  <div className="px-4 py-3 bg-gray-800/50 border-b border-gray-800">
+                    <h3 className="font-semibold">{getModuleLabel(module)}</h3>
+                    <p className="text-xs text-gray-500">{events.length} events</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr className="border-b border-gray-800 text-gray-400 text-left bg-gray-900">
+                          <th className="px-4 py-3 font-medium">Date</th>
+                          <th className="px-4 py-3 font-medium">Summary</th>
+                          {columns.slice(0, 2).map((col) => (
+                            <th key={col.key} className="px-4 py-3 font-medium">{col.label}</th>
+                          ))}
+                          <th className="px-4 py-3 font-medium">Sellable</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {events.slice(0, 10).map((e, i) => (
+                          <tr key={e.id || i} className="border-b border-gray-800/50 hover:bg-gray-800/30 transition-colors">
+                            <td className="px-4 py-3 text-gray-300">
+                              {new Date(e.captured_at).toLocaleString()}
+                            </td>
+                            <td className="px-4 py-3 text-gray-300">
+                              {getEventSummary(e)}
+                            </td>
+                            {columns.slice(0, 2).map((col) => (
+                              <td key={col.key} className="px-4 py-3 text-gray-300">
+                                {col.value(e) || '—'}
+                              </td>
+                            ))}
+                            <td className="px-4 py-3">
+                              <span className={`text-xs px-2 py-0.5 rounded-full ${
+                                e.can_sell_snapshot
+                                  ? 'bg-green-500/20 text-green-400'
+                                  : 'bg-gray-700 text-gray-400'
+                              }`}>
+                                {e.can_sell_snapshot ? 'Yes' : 'No'}
+                              </span>
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                  {events.length > 10 && (
+                    <div className="px-4 py-3 bg-gray-800/30 text-center border-t border-gray-800">
+                      <p className="text-xs text-gray-500">+{events.length - 10} more events</p>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
