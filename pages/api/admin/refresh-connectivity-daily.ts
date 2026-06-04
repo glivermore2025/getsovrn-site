@@ -1,5 +1,6 @@
 import type { NextApiRequest, NextApiResponse } from 'next';
-import { createClient } from '@supabase/supabase-js';
+import { requireAdmin } from '../../../lib/apiAuth';
+import { getSupabaseAdminClient } from '../../../lib/supabaseAdmin';
 
 type RequestBody = {
   startDate?: string;
@@ -17,12 +18,6 @@ type ErrorResponse = {
   error: string;
 };
 
-/**
- * Admin-only endpoint to refresh the connectivity daily dataset.
- * 
- * TODO: Migrate admin authorization away from hardcoded frontend IDs
- * and into DB-backed roles (e.g., RLS with is_admin flag).
- */
 export default async function handler(
   req: NextApiRequest,
   res: NextApiResponse<SuccessResponse | ErrorResponse>
@@ -32,16 +27,13 @@ export default async function handler(
   }
 
   try {
-    // TODO: Replace hardcoded admin check with proper auth/RLS
-    const adminId = process.env.ADMIN_USER_ID;
-    if (!adminId) {
-      console.error('ADMIN_USER_ID not configured');
-      return res.status(500).json({ error: 'Admin configuration missing' });
+    try {
+      await requireAdmin(req);
+    } catch (authError) {
+      const message = authError instanceof Error ? authError.message : 'Unauthorized';
+      const status = message === 'Insufficient privileges' ? 403 : 401;
+      return res.status(status).json({ error: message });
     }
-
-    // In production, verify the request is from an authorized admin
-    // via Supabase auth token or session.
-    // For now, this is a placeholder.
 
     const body = req.body as RequestBody;
 
@@ -77,10 +69,7 @@ export default async function handler(
     }
 
     // Call the refresh function via RPC
-    const supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!
-    );
+    const supabase = getSupabaseAdminClient();
 
     const { error } = await supabase.rpc('refresh_connectivity_daily', {
       p_start_date: startDate,

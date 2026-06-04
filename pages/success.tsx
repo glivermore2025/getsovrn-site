@@ -85,13 +85,8 @@ export default function SuccessPage() {
     }
   };
 
-  const handleGoToDataset = (slug?: string | null) => {
-    if (!slug) {
-      // Fallback to markets if slug is not available
-      router.push('/market');
-      return;
-    }
-    router.push(`/dataset/${slug}`);
+  const handleGoToPurchasedData = () => {
+    router.push('/buyer/purchased-data');
   };
 
   return (
@@ -117,10 +112,10 @@ export default function SuccessPage() {
             <p className="text-gray-300 mb-4">{payload.dataset.description}</p>
           )}
           <button
-            onClick={() => handleGoToDataset(payload.dataset.slug)}
+            onClick={handleGoToPurchasedData}
             className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-medium"
           >
-            Go to Dataset
+            View Purchased Data
           </button>
         </div>
       ) : (

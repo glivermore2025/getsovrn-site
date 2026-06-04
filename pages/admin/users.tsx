@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useRouter } from 'next/router';
-import { ADMIN_USER_IDS } from '../../lib/constants';
+import { getCurrentUserIsAdmin } from '../../lib/roleAccess';
 
 export default function AdminUsers() {
   const [users, setUsers] = useState<any[]>([]);
@@ -9,9 +9,9 @@ export default function AdminUsers() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const user = data?.user;
-      if (!user || !ADMIN_USER_IDS.includes(user.id)) router.push('/');
+      if (!user || !(await getCurrentUserIsAdmin())) router.push('/');
     });
 
     fetchUsers();

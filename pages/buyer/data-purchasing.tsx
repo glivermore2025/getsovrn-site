@@ -17,11 +17,14 @@ type PreviewRow = {
   primary_network: string;
   disconnect_count: number;
   uptime_pct: number;
+  contributor_count: number;
 };
 
 type PreviewResponse = {
   rows: PreviewRow[];
   totalCount: number;
+  appliedLimit: number;
+  minPreviewContributorCount: number;
 };
 
 const parseCsv = (value: string) =>
@@ -83,9 +86,22 @@ export default function DataPurchasingPage() {
     setLoading(true);
     setError(null);
     try {
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
+
+      if (!session?.access_token) {
+        throw new Error('Please log in to preview buyer datasets.');
+      }
+
       const response = await axios.post<PreviewResponse>(
         '/api/buyer/datasets/connectivity/preview',
-        filters
+        filters,
+        {
+          headers: {
+            Authorization: `Bearer ${session.access_token}`,
+          },
+        }
       );
       setRows(response.data.rows);
       setTotalCount(response.data.totalCount);
@@ -290,6 +306,7 @@ export default function DataPurchasingPage() {
                 <div>
                   <h2 className="text-2xl font-semibold">Preview</h2>
                   <p className="text-gray-400">Query the transformed daily connectivity dataset and inspect the matching rows.</p>
+                  <p className="mt-1 text-sm text-gray-500">Only cohorts with at least 25 contributors are previewed.</p>
                 </div>
                 <button
                   onClick={handlePurchase}
@@ -329,12 +346,13 @@ export default function DataPurchasingPage() {
                       <th className="px-4 py-3 font-medium">Network</th>
                       <th className="px-4 py-3 font-medium">Disconnects</th>
                       <th className="px-4 py-3 font-medium">Uptime %</th>
+                      <th className="px-4 py-3 font-medium">Contributors</th>
                     </tr>
                   </thead>
                   <tbody>
                     {rows.length === 0 ? (
                       <tr>
-                        <td colSpan={6} className="p-4 text-center text-gray-400">
+                        <td colSpan={7} className="p-4 text-center text-gray-400">
                           {loading ? 'Loading preview…' : 'No preview rows match the selected filters.'}
                         </td>
                       </tr>
@@ -347,6 +365,7 @@ export default function DataPurchasingPage() {
                           <td className="px-4 py-3">{row.primary_network || 'unknown'}</td>
                           <td className="px-4 py-3">{row.disconnect_count}</td>
                           <td className="px-4 py-3">{row.uptime_pct?.toFixed(2)}%</td>
+                          <td className="px-4 py-3">{row.contributor_count}</td>
                         </tr>
                       ))
                     )}

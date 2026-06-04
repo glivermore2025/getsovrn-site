@@ -3,20 +3,33 @@ import Head from 'next/head';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 
-interface Listing {
-  title: string;
-  file_path: string;
-  price?: number;
-}
-
-interface Purchase {
+type ListingPurchase = {
   listing_id: string;
-  listings: Listing;
-}
+  listings: {
+    title: string;
+    file_path: string | null;
+    price?: number | null;
+  } | null;
+};
+
+type DatasetPurchase = {
+  id: string;
+  dataset_id: string;
+  stripe_session_id: string | null;
+  gross_revenue_cents: number;
+  currency: string;
+  created_at: string;
+  datasets: {
+    name: string;
+    description?: string | null;
+    slug?: string | null;
+  } | null;
+};
 
 export default function BuyerPurchasedDataPage() {
   const { user, loading: authLoading } = useAuth();
-  const [purchases, setPurchases] = useState<Purchase[]>([]);
+  const [listingPurchases, setListingPurchases] = useState<ListingPurchase[]>([]);
+  const [datasetPurchases, setDatasetPurchases] = useState<DatasetPurchase[]>([]);
   const [loading, setLoading] = useState(true);
   const supabase = getSupabaseClient();
 
@@ -28,26 +41,65 @@ export default function BuyerPurchasedDataPage() {
 
     const fetchPurchases = async () => {
       setLoading(true);
-      const { data, error } = await supabase
-        .from('purchases')
-        .select(`
-          listing_id,
-          listings (
-            title,
-            file_path,
-            price
+      const [legacyResult, datasetResult] = await Promise.all([
+        supabase
+          .from('purchases')
+          .select(
+            `
+            listing_id,
+            listings (
+              title,
+              file_path,
+              price
+            )
+          `
           )
-        `)
-        .eq('user_id', user.id);
+          .eq('user_id', user.id),
+        supabase
+          .from('dataset_purchases')
+          .select(
+            `
+            id,
+            dataset_id,
+            stripe_session_id,
+            gross_revenue_cents,
+            currency,
+            created_at,
+            datasets (
+              name,
+              description,
+              slug
+            )
+          `
+          )
+          .eq('buyer_user_id', user.id)
+          .order('created_at', { ascending: false }),
+      ]);
 
-      if (error) {
-        console.error('Error fetching purchases:', error);
+      if (legacyResult.error) {
+        console.error('Error fetching listing purchases:', legacyResult.error);
       } else {
-        const cleaned = (data || []).map((p: any) => ({
-          listing_id: p.listing_id,
-          listings: Array.isArray(p.listings) ? p.listings[0] : p.listings,
-        }));
-        setPurchases(cleaned);
+        setListingPurchases(
+          (legacyResult.data || []).map((purchase: any) => ({
+            listing_id: purchase.listing_id,
+            listings: Array.isArray(purchase.listings)
+              ? purchase.listings[0] ?? null
+              : purchase.listings,
+          }))
+        );
+      }
+
+      if (datasetResult.error) {
+        console.error('Error fetching dataset purchases:', datasetResult.error);
+      } else {
+        setDatasetPurchases(
+          (datasetResult.data || []).map((purchase: any) => ({
+            ...purchase,
+            datasets: Array.isArray(purchase.datasets)
+              ? purchase.datasets[0] ?? null
+              : purchase.datasets,
+          }))
+        );
       }
 
       setLoading(false);
@@ -56,7 +108,9 @@ export default function BuyerPurchasedDataPage() {
     fetchPurchases();
   }, [supabase, user]);
 
-  const handleDownload = async (filePath: string) => {
+  const handleDownload = async (filePath: string | null) => {
+    if (!filePath) return;
+
     const { data, error } = await supabase.storage.from('datasets').createSignedUrl(filePath, 60);
 
     if (data?.signedUrl) {
@@ -67,17 +121,19 @@ export default function BuyerPurchasedDataPage() {
     }
   };
 
+  const hasPurchases = datasetPurchases.length > 0 || listingPurchases.length > 0;
+
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head>
-        <title>Purchased Data – Sovrn</title>
+        <title>Purchased Data - Sovrn</title>
       </Head>
 
       <div className="max-w-5xl mx-auto space-y-6">
         <header className="rounded-3xl border border-gray-800 bg-gray-900 p-8 shadow-sm">
           <h1 className="text-3xl font-bold">Purchased Data</h1>
           <p className="mt-2 text-gray-400">
-            Review your purchased dataset exports and download any available files.
+            Review purchased data products, query receipts, and downloadable legacy files.
           </p>
         </header>
 
@@ -90,35 +146,87 @@ export default function BuyerPurchasedDataPage() {
             <p className="text-lg font-semibold text-white">Sign in to view your purchased datasets.</p>
             <p className="mt-3">Visit the buyer dashboard or marketplace to request access to new data products.</p>
           </div>
-        ) : purchases.length === 0 ? (
+        ) : !hasPurchases ? (
           <div className="rounded-3xl border border-dashed border-gray-800 bg-gray-900 p-12 text-center text-gray-400">
             <p className="text-lg font-semibold text-white">No purchases found.</p>
-            <p className="mt-3">Once your access requests are approved, approved exports will appear here.</p>
+            <p className="mt-3">Purchased data products and approved exports will appear here.</p>
             <a href="/buyer/marketplace" className="mt-6 inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
               Browse Marketplace
             </a>
           </div>
         ) : (
-          <ul className="space-y-4">
-            {purchases.map((purchase, i) => (
-              <li key={i} className="bg-gray-800 p-4 rounded">
-                <h3 className="text-lg font-semibold">{purchase.listings?.title || 'Untitled'}</h3>
-                {purchase.listings?.price != null ? (
-                  <p className="text-sm text-gray-400 mb-2">Price: ${purchase.listings.price.toFixed(2)}</p>
-                ) : null}
-                {purchase.listings?.file_path ? (
-                  <button
-                    onClick={() => handleDownload(purchase.listings.file_path)}
-                    className="text-blue-400 underline mt-2 inline-block"
-                  >
-                    Download File
-                  </button>
-                ) : (
-                  <p className="text-sm text-red-400">No file available</p>
-                )}
-              </li>
-            ))}
-          </ul>
+          <div className="space-y-8">
+            {datasetPurchases.length > 0 ? (
+              <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Data products</h2>
+                <ul className="space-y-4">
+                  {datasetPurchases.map((purchase) => (
+                    <li key={purchase.id} className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                        <div>
+                          <h3 className="text-lg font-semibold">{purchase.datasets?.name || 'Dataset purchase'}</h3>
+                          {purchase.datasets?.description ? (
+                            <p className="mt-2 text-sm text-gray-400">{purchase.datasets.description}</p>
+                          ) : null}
+                          <p className="mt-3 text-xs text-gray-500">
+                            Session {purchase.stripe_session_id || 'pending'} - purchased{' '}
+                            {new Date(purchase.created_at).toLocaleDateString()}
+                          </p>
+                        </div>
+                        <div className="rounded-xl bg-gray-950 px-4 py-3 text-right">
+                          <p className="text-sm text-gray-400">Amount paid</p>
+                          <p className="text-lg font-semibold">
+                            {(purchase.currency || 'usd').toUpperCase()}{' '}
+                            {(purchase.gross_revenue_cents / 100).toFixed(2)}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                        <div className="rounded-xl bg-gray-950 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Export</p>
+                          <p className="mt-2 text-sm text-gray-300">Pending generation</p>
+                        </div>
+                        <div className="rounded-xl bg-gray-950 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">API access</p>
+                          <p className="mt-2 text-sm text-gray-300">Coming soon</p>
+                        </div>
+                        <div className="rounded-xl bg-gray-950 p-4">
+                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">License</p>
+                          <p className="mt-2 text-sm text-gray-300">Standard dataset terms</p>
+                        </div>
+                      </div>
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+
+            {listingPurchases.length > 0 ? (
+              <section className="space-y-4">
+                <h2 className="text-xl font-semibold">Legacy listing downloads</h2>
+                <ul className="space-y-4">
+                  {listingPurchases.map((purchase, index) => (
+                    <li key={`${purchase.listing_id}-${index}`} className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+                      <h3 className="text-lg font-semibold">{purchase.listings?.title || 'Untitled'}</h3>
+                      {purchase.listings?.price != null ? (
+                        <p className="text-sm text-gray-400 mb-2">Price: ${purchase.listings.price.toFixed(2)}</p>
+                      ) : null}
+                      {purchase.listings?.file_path ? (
+                        <button
+                          onClick={() => handleDownload(purchase.listings?.file_path ?? null)}
+                          className="mt-2 inline-block text-blue-400 underline"
+                        >
+                          Download file
+                        </button>
+                      ) : (
+                        <p className="text-sm text-red-400">No file available</p>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              </section>
+            ) : null}
+          </div>
         )}
       </div>
     </div>

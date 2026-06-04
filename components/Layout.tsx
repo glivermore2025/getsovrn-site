@@ -1,9 +1,9 @@
 import Link from 'next/link';
 import { useRouter } from 'next/router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../lib/supabaseClient';
 import { useAuth } from '../lib/authContext';
-import { ADMIN_USER_IDS } from '../lib/constants';
+import { getCurrentUserIsAdmin } from '../lib/roleAccess';
 
 const supabase = getSupabaseClient();
 
@@ -12,6 +12,24 @@ export default function Layout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const [buyerMenuOpen, setBuyerMenuOpen] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+
+    if (!user) {
+      setIsAdmin(false);
+      return;
+    }
+
+    getCurrentUserIsAdmin().then((admin) => {
+      if (active) setIsAdmin(admin);
+    });
+
+    return () => {
+      active = false;
+    };
+  }, [user]);
 
   const handleLogout = async () => {
     await supabase.auth.signOut();
@@ -76,7 +94,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
                 </Link>
               </>
             )}
-            {ADMIN_USER_IDS.includes(user?.id || '') && (
+            {isAdmin && (
               <Link href="/admin/metrics" className="rounded-full bg-yellow-600 px-4 py-2 text-sm font-medium text-black hover:bg-yellow-700 transition">
                 Admin
               </Link>
@@ -121,7 +139,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
               </>
             )}
             <div className="pt-4 border-t border-gray-800 flex flex-col space-y-2">
-              {ADMIN_USER_IDS.includes(user?.id || '') && (
+              {isAdmin && (
                 <Link href="/admin/metrics" className="bg-yellow-600 hover:bg-yellow-700 py-2 px-4 rounded text-sm text-center" onClick={() => setMobileMenuOpen(false)}>
                   Admin
                 </Link>
