@@ -4,34 +4,46 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
+    "typecheck": "tsc --noEmit",
+    "lint": "eslint .",
+    "test": "jest --passWithNoTests",
+    "format": "prettier --write .",
     "build": "next build",
-    "start": "next start"
+    "start": "next start",
+    "check": "npm run typecheck && npm run lint && npm run test && npm run build"
   },
   "dependencies": {
+    "@supabase/supabase-js": "2.39.6",
     "autoprefixer": "latest",
+    "axios": "^1.5.0",
+    "micro": "^9.3.4",
     "next": "15.5.8",
+    "papaparse": "^5.4.1",
     "postcss": "latest",
     "react": "latest",
     "react-dom": "latest",
-    "tailwindcss": "latest",
-    "resend": "^1.0.0",
-    "@supabase/supabase-js": "2.39.6",
-    "uuid": "^9.0.0",
-    "axios": "^1.5.0",
-    "stripe": "^12.16.0",
-    "micro": "^9.3.4",
     "recharts": "^2.8.0",
-    "papaparse": "^5.4.1"
+    "resend": "^1.0.0",
+    "stripe": "^12.16.0",
+    "tailwindcss": "latest",
+    "uuid": "^9.0.0"
   },
   "devDependencies": {
-    "typescript": "^5.4.0",
-    "@types/react": "^18.2.0",
+    "@types/jest": "^29.5.14",
     "@types/node": "^20.11.0",
-    "tailwindcss": "^3.4.1",
-    "postcss": "^8.4.21",
-    "autoprefixer": "^10.4.14",
+    "@types/papaparse": "^5.2.7",
+    "@types/react": "^18.2.0",
     "@types/uuid": "^9.0.0",
-    "@types/papaparse": "^5.2.7"
+    "autoprefixer": "^10.4.14",
+    "eslint": "^9.16.0",
+    "eslint-config-next": "^15.5.8",
+    "jest": "^29.7.0",
+    "jest-environment-jsdom": "^29.7.0",
+    "postcss": "^8.4.21",
+    "prettier": "^3.3.3",
+    "tailwindcss": "^3.4.1",
+    "ts-jest": "^29.2.5",
+    "typescript": "^5.4.0"
   },
   "engines": {
     "node": "20.x"

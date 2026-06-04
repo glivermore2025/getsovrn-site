@@ -1,7 +1,7 @@
 import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../lib/supabaseClient';
-import { ADMIN_USER_IDS } from '../../lib/constants';
+import { getCurrentUserIsAdmin } from '../../lib/roleAccess';
 import { useRouter } from 'next/router';
 import { BuyerAccessRequest, DataProduct } from '../../lib/types';
 import BuyerAccessRequestTable from '../../components/admin/BuyerAccessRequestTable';
@@ -17,10 +17,10 @@ export default function AdminBuyerRequests() {
   const router = useRouter();
 
   useEffect(() => {
-    supabase.auth.getUser().then(({ data }) => {
+    supabase.auth.getUser().then(async ({ data }) => {
       const u = data?.user;
       setUser(u);
-      if (!u || !ADMIN_USER_IDS.includes(u.id)) {
+      if (!u || !(await getCurrentUserIsAdmin())) {
         router.push('/');
       }
     });
