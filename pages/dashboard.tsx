@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { getSupabaseClient } from '../lib/supabaseClient';
 import { v4 as uuidv4 } from 'uuid';
@@ -550,10 +551,10 @@ export default function Dashboard() {
   const marketplaceStatus = listings.length > 0 ? 'Marketplace participation active' : 'Not participating yet';
 
   const tabs: { key: 'device' | 'rights' | 'seller' | 'buyer'; label: string }[] = [
-    { key: 'device', label: 'My Device Data' },
-    { key: 'rights', label: 'Data Rights' },
-    { key: 'seller', label: 'Seller' },
-    { key: 'buyer', label: 'Buyer' },
+    { key: 'device', label: 'My Data' },
+    { key: 'rights', label: 'Permissions' },
+    { key: 'seller', label: 'Listings' },
+    { key: 'buyer', label: 'Requests' },
   ];
 
   return (
@@ -562,6 +563,62 @@ export default function Dashboard() {
 
       <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
       <p className="text-gray-400 text-sm mb-8">Review your consented contributions, manage data permissions, and see how your opted-in signals are used in the marketplace.</p>
+
+      {authLoading ? (
+        <div className="flex items-center justify-center py-20">
+          <div className="w-6 h-6 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
+        </div>
+      ) : !user ? (
+        <div className="mx-auto max-w-2xl rounded-xl border border-gray-800 bg-gray-900 p-8 text-center">
+          <p className="text-sm font-medium uppercase tracking-wide text-blue-300">Account required</p>
+          <h2 className="mt-3 text-2xl font-semibold">Sign in to view your data dashboard.</h2>
+          <p className="mx-auto mt-3 max-w-xl text-sm text-gray-400">
+            Your dashboard only shows live contribution status, permissions, and marketplace activity after you sign in.
+          </p>
+          <div className="mt-6 flex flex-col justify-center gap-3 sm:flex-row">
+            <Link
+              href="/login"
+              className="rounded-lg bg-blue-600 px-5 py-3 text-sm font-medium text-white transition-colors hover:bg-blue-700"
+            >
+              Sign In
+            </Link>
+            <Link
+              href="/"
+              className="rounded-lg border border-gray-700 px-5 py-3 text-sm font-medium text-gray-200 transition-colors hover:border-blue-400 hover:text-blue-300"
+            >
+              Join Waitlist
+            </Link>
+          </div>
+        </div>
+      ) : (
+        <>
+      <div className="mb-8 rounded-xl border border-blue-500/30 bg-blue-500/10 p-5">
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div>
+            <p className="text-sm font-medium uppercase tracking-wide text-blue-300">Next steps</p>
+            <h2 className="mt-1 text-xl font-semibold">Get your account marketplace-ready.</h2>
+            <p className="mt-1 text-sm text-gray-300">
+              Connect the mobile app, choose data permissions, then review what is ready for buyer-safe datasets.
+            </p>
+          </div>
+          <div className="flex flex-col gap-2 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setActiveTab('device')}
+              className="rounded-lg bg-blue-600 px-4 py-2.5 text-sm font-medium transition-colors hover:bg-blue-700"
+            >
+              Connect mobile app
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab('rights')}
+              className="rounded-lg border border-gray-700 px-4 py-2.5 text-sm font-medium text-gray-200 transition-colors hover:border-blue-400 hover:text-blue-300"
+            >
+              Manage permissions
+            </button>
+          </div>
+        </div>
+      </div>
 
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4 mb-8">
         <ContributionStatusCard
@@ -615,15 +672,7 @@ export default function Dashboard() {
         ))}
       </div>
 
-      {authLoading ? (
-        <div className="flex items-center justify-center py-20">
-          <div className="w-6 h-6 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
-        </div>
-      ) : !user ? (
-        <div className="text-center py-20">
-          <p className="text-gray-400 text-lg">Sign in to view your dashboard.</p>
-        </div>
-      ) : activeTab === 'device' ? (
+      {activeTab === 'device' ? (
         <DeviceDataTab
           devices={devices}
           recentEvents={recentEvents}
@@ -776,6 +825,8 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+      )}
+        </>
       )}
 
       {showModal && previewData && (
