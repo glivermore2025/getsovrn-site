@@ -8,7 +8,7 @@ export default function ForConsumersPage() {
         <title>For Consumers – Sovrn</title>
         <meta
           name="description"
-          content="Contribute your data on your terms and earn when privacy-safe insights are created."
+          content="Contribute your data on your terms and participate when privacy-safe insights are created."
         />
       </Head>
 
@@ -19,7 +19,7 @@ export default function ForConsumersPage() {
               <p className="text-sm uppercase tracking-[0.3em] text-blue-400">For Consumers</p>
               <h1 className="mt-4 text-5xl font-bold leading-tight">Contribute your data on your terms.</h1>
               <p className="mt-6 text-lg text-gray-400 max-w-2xl">
-                Sovrn helps you stay in control of your data while participating in a privacy-safe marketplace. You decide what you share, see how it is used, and earn when consented contributions create value.
+                Sovrn helps you stay in control of your data while participating in a privacy-safe marketplace. You decide what you share, see how it is used, and review estimated value when consented contributions support buyer datasets.
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
@@ -36,8 +36,8 @@ export default function ForConsumersPage() {
               <p className="text-sm uppercase tracking-[0.3em] text-blue-400">What you control</p>
               <div className="mt-4 space-y-3 text-gray-300">
                 <p><span className="font-semibold text-white">Data categories:</span> Device & connectivity, mobility signals, consumer pulse surveys, and preference trends.</p>
-                <p><span className="font-semibold text-white">Privacy:</span> Individual records are never sold directly. Buyers receive aggregated, consent-based insights.</p>
-                <p><span className="font-semibold text-white">Earnings:</span> You earn when marketplace value is created, based on demand, quality, and participation.</p>
+                <p><span className="font-semibold text-white">Privacy:</span> Buyers receive aggregated, consent-based insights, not individual records.</p>
+                <p><span className="font-semibold text-white">Value:</span> Estimated value depends on demand, quality, and participation.</p>
               </div>
             </div>
           </div>
@@ -50,7 +50,7 @@ export default function ForConsumersPage() {
               <li><span className="font-semibold text-white">1.</span> Create an account.</li>
               <li><span className="font-semibold text-white">2.</span> Choose consent categories.</li>
               <li><span className="font-semibold text-white">3.</span> Sync eligible data and surveys.</li>
-              <li><span className="font-semibold text-white">4.</span> Earn when aggregated insights are requested by buyers.</li>
+              <li><span className="font-semibold text-white">4.</span> Review estimated value when aggregated insights are requested by buyers.</li>
             </ol>
           </div>
 
@@ -78,9 +78,9 @@ export default function ForConsumersPage() {
         </section>
 
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8">
-          <h2 className="text-2xl font-semibold">Earnings and expectations</h2>
+          <h2 className="text-2xl font-semibold">Value and expectations</h2>
           <p className="mt-4 text-gray-400 leading-relaxed">
-            Earnings depend on buyer demand, data category, data quality, and marketplace participation. GetSovrn shows estimated value as data products become active, but cannot guarantee payouts until buyer access is approved.
+            Estimated value depends on buyer demand, data category, data quality, and marketplace participation. GetSovrn shows estimated value as data products become active, but cannot guarantee payouts or buyer access approval.
           </p>
         </section>
       </main>

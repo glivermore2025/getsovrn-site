@@ -174,7 +174,7 @@ export default function Marketplace() {
               : 'bg-gray-700 hover:bg-gray-600'
           }`}
         >
-          Sell Data
+          Share Data
         </button>
       </div>
 

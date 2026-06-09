@@ -634,7 +634,7 @@ export default function Dashboard() {
         <ContributionStatusCard
           title="Estimated value"
           value={`$${(totalMonthlyEstimate / 100).toFixed(2)}/mo`}
-          description="Potential earnings from active consented data categories."
+          description="Estimated value from active consented data categories."
         />
         <ContributionStatusCard
           title="Marketplace status"
@@ -806,9 +806,9 @@ export default function Dashboard() {
                     <p className="text-green-400 font-semibold mt-2">Budget: ${post.budget.toFixed(2)}</p>
                     <p className="text-xs text-gray-500 mt-1">{post.tags?.join(', ')}</p>
                     <div className="mt-4">
-                      <h4 className="text-sm font-semibold text-gray-300">Sellers who opted in:</h4>
+                      <h4 className="text-sm font-semibold text-gray-300">Contributors who opted in:</h4>
                       {post.buyer_post_optins.length === 0 ? (
-                        <p className="text-gray-500 text-sm mt-1">No sellers have opted in yet.</p>
+                        <p className="text-gray-500 text-sm mt-1">No contributors have opted in yet.</p>
                       ) : (
                         <ul className="mt-1 space-y-1">
                           {post.buyer_post_optins.map((opt: any) => (
@@ -906,7 +906,7 @@ function DataRightsTab({
           <p className="text-3xl font-bold text-green-400 mt-1">
             ${(totalMonthlyEstimate / 100).toFixed(2)}
           </p>
-          <p className="text-xs text-gray-500 mt-1">Based on modules where collect + sell are ON</p>
+          <p className="text-xs text-gray-500 mt-1">Based on modules where collect + share are ON</p>
         </div>
         <div className="bg-gray-900 border border-gray-800 p-6 rounded-xl">
           <p className="text-sm text-gray-400">Potential Monthly Estimate</p>
@@ -976,7 +976,7 @@ function DataRightsTab({
                     className="w-4 h-4 rounded accent-green-500 disabled:opacity-40"
                   />
                   <span className={`text-sm ${!isCollecting ? 'text-gray-600' : ''}`}>
-                    Sell
+                    Share
                   </span>
                 </label>
 
@@ -1027,8 +1027,8 @@ function DataRightsTab({
       <div className="bg-gray-900 border border-gray-800 p-5 rounded-xl text-center">
         <p className="text-sm text-gray-400">
           Your data is always anonymized before inclusion in pooled datasets.
-          We never sell individual records. Toggle &quot;Sell&quot; off at any time to stop
-          earning — your data stays private while still being collected for your use.
+          Buyers receive aggregated outputs, not individual records. Toggle &quot;Share&quot; off at any time to stop
+          marketplace participation while still collecting data for your use.
         </p>
       </div>
     </div>
@@ -1170,7 +1170,7 @@ function DeviceDataTab({
         <div className="flex items-center justify-between mb-6">
           <div>
             <h2 className="text-lg font-semibold">Marketplace Approval</h2>
-            <p className="text-sm text-gray-400 mt-1">Choose which data categories to make available for sale in anonymized pools.</p>
+            <p className="text-sm text-gray-400 mt-1">Choose which data categories to include in anonymized, aggregated marketplace pools.</p>
           </div>
         </div>
 
@@ -1319,7 +1319,7 @@ function DeviceDataTab({
         <div className="flex items-center justify-between mb-4">
           <div>
             <h2 className="text-lg font-semibold">Marketplace Readiness</h2>
-            <p className="text-sm text-gray-400 mt-1">Shows whether your connectivity data has been transformed into buyable datasets.</p>
+            <p className="text-sm text-gray-400 mt-1">Shows whether your connectivity data has been transformed into buyer-ready aggregated datasets.</p>
           </div>
           <button
             onClick={handleRefreshMarketplaceData}
@@ -1342,7 +1342,7 @@ function DeviceDataTab({
             <p className="text-2xl font-bold text-green-400 mt-1">{connectivityEventsCount}</p>
           </div>
           <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
-            <p className="text-xs text-gray-400">Sellable</p>
+            <p className="text-xs text-gray-400">Eligible</p>
             <p className="text-2xl font-bold text-blue-400 mt-1">{connectivitySellableCount}</p>
           </div>
           <div className="bg-gray-800/50 border border-gray-700 rounded-lg p-4">
@@ -1395,7 +1395,7 @@ function DeviceDataTab({
                           {columns.slice(0, 2).map((col) => (
                             <th key={col.key} className="px-4 py-3 font-medium">{col.label}</th>
                           ))}
-                          <th className="px-4 py-3 font-medium">Sellable</th>
+                          <th className="px-4 py-3 font-medium">Eligible</th>
                         </tr>
                       </thead>
                       <tbody>

@@ -4,7 +4,7 @@
 import { useState } from 'react';
 
 const audienceOptions = [
-  { value: 'sell', label: 'I want to sell my data' },
+  { value: 'sell', label: 'I want to contribute data' },
   { value: 'buy', label: 'I want to buy data' },
   { value: 'partner', label: 'I’m interested in partnering' },
 ];

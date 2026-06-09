@@ -16,14 +16,14 @@ const howItWorks = [
   'Choose what to share',
   'Sovrn transforms it into buyer-ready datasets',
   'Buyers request access',
-  'You earn when your data creates value',
+  'Value is estimated when contributions support buyer datasets',
 ];
 
 const sellerControls = [
   { title: 'Data categories', description: 'Control which data categories you share and keep private.' },
   { title: 'Buyer access', description: 'Buyers request access before any dataset export is shared.' },
   { title: 'Marketplace participation', description: 'Opt in only when you are ready to make contributions available.' },
-  { title: 'Payout preferences', description: 'Set how and when you receive earnings from approved data sales.' },
+  { title: 'Value preferences', description: 'See estimated value from approved, aggregated dataset participation.' },
   { title: 'Revocation and deletion', description: 'Leave or remove your data from the marketplace at any time.' },
 ];
 
@@ -40,10 +40,10 @@ export default function Home() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-950 via-slate-950 to-black text-white">
       <Head>
-        <title>GetSovrn – Own your data. Earn from it on your terms.</title>
+        <title>GetSovrn - Control your data. Share on your terms.</title>
         <meta
           name="description"
-          content="Sovrn helps individuals monetize consented, privacy-protected data while giving buyers access to transparent, high-quality datasets."
+          content="Sovrn helps individuals control consented, privacy-protected data while giving buyers access to transparent, aggregated datasets."
         />
         <link rel="icon" href="/favicon.ico" />
       </Head>
@@ -55,15 +55,15 @@ export default function Home() {
               Privacy-first data marketplace
             </div>
             <div className="space-y-6">
-              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">Own your data. Earn from it on your terms.</h1>
+              <h1 className="text-5xl md:text-6xl font-extrabold tracking-tight">Control your data. Share on your terms.</h1>
               <p className="max-w-2xl text-lg text-gray-300 leading-8">
-                Sovrn helps individuals monetize consented, privacy-protected data while giving buyers access to transparent, high-quality datasets.
+                Sovrn helps individuals manage consented, privacy-protected contributions while giving buyers access to transparent, high-quality aggregated datasets.
               </p>
             </div>
 
             <div className="flex flex-col gap-4 sm:flex-row sm:flex-wrap">
               <Link href="/for-consumers" className="inline-flex items-center justify-center rounded-full bg-green-600 px-7 py-3 text-sm font-semibold text-white hover:bg-green-700 transition">
-                Start Selling Data
+                Start Sharing Controls
               </Link>
               <Link href="/buyer/marketplace" className="inline-flex items-center justify-center rounded-full bg-blue-600 px-7 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition">
                 Explore Buyer Marketplace

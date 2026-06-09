@@ -21,7 +21,7 @@ export default function PrivacyPage() {
           </p>
           <div className="mt-8 flex flex-col gap-4 sm:flex-row sm:items-center">
             <Link href="/for-consumers" className="inline-flex items-center justify-center rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700 transition">
-              Learn about selling data
+              Learn about contributing data
             </Link>
             <Link href="/buyer/marketplace" className="inline-flex items-center justify-center rounded-full border border-gray-700 bg-transparent px-6 py-3 text-sm font-semibold text-white hover:border-blue-400 hover:text-blue-300 transition">
               Browse datasets
@@ -33,10 +33,12 @@ export default function PrivacyPage() {
           <div className="rounded-3xl border border-gray-800 bg-gray-950 p-8">
             <h2 className="text-3xl font-semibold">What data is collected</h2>
             <p className="mt-4 text-gray-300 leading-7">
-              Sovrn collects only consented signals that contributors choose to share. That can include device context, connectivity, location trends, or usage categories depending on the data source.
+              Sovrn collects only consented signals that contributors choose to share. That can include account profile details, stable demographics, device context, network connectivity, and coarse city-level location when you enable those modules.
             </p>
             <ul className="mt-6 space-y-4 text-gray-300">
               <li>Explicitly opted-in data categories only</li>
+              <li>Profile data such as email address and display name for account access</li>
+              <li>Stable demographic fields saved to your profile, not as recurring device events</li>
               <li>Aggregated and anonymized before buyer preview</li>
               <li>No raw personal identifiers in marketplace exports</li>
             </ul>
@@ -49,6 +51,7 @@ export default function PrivacyPage() {
             <ul className="mt-6 space-y-4 text-gray-300">
               <li>Individual-level GPS or raw location trails</li>
               <li>Names, email addresses, or personal identifiers</li>
+              <li>Precise street address or raw latitude/longitude in buyer datasets</li>
               <li>Transaction details tied to a single person</li>
             </ul>
           </div>
@@ -95,7 +98,7 @@ export default function PrivacyPage() {
           <div className="rounded-3xl border border-gray-800 bg-gray-950 p-8">
             <h2 className="text-3xl font-semibold">How payouts work</h2>
             <p className="mt-4 text-gray-300 leading-7">
-              Contributors earn when their consented data creates value in buyer datasets. Estimated value appears after the first sync and depends on category, region, freshness, and buyer demand.
+              Contributors may receive value when consented, aggregated contributions support buyer datasets. Estimated value appears after the first sync and depends on category, region, freshness, and buyer demand.
             </p>
           </div>
           <div className="rounded-3xl border border-gray-800 bg-gray-950 p-8">
@@ -103,6 +106,9 @@ export default function PrivacyPage() {
             <p className="mt-4 text-gray-300 leading-7">
               If you leave the marketplace or delete your data, Sovrn removes your records from new dataset construction and prevents future sharing. Existing buyer products remain aggregated and privacy-safe.
             </p>
+            <Link href="/account-deletion" className="mt-5 inline-flex rounded-full border border-gray-700 px-5 py-2.5 text-sm font-semibold text-white hover:border-blue-400 hover:text-blue-300 transition">
+              View account deletion options
+            </Link>
           </div>
         </section>
 
@@ -110,7 +116,7 @@ export default function PrivacyPage() {
           <p className="text-sm uppercase tracking-[0.3em] text-blue-400">Trust first</p>
           <h2 className="mt-4 text-3xl font-bold">Your data stays under your control.</h2>
           <p className="mt-4 max-w-3xl mx-auto text-gray-300 leading-7">
-            Sovrn gives contributors a transparent, privacy-conscious path to earn while buyers get the clarity they need to evaluate consent-backed datasets.
+            Sovrn gives contributors a transparent, privacy-conscious path to participate while buyers get the clarity they need to evaluate consent-backed datasets.
           </p>
         </section>
       </main>

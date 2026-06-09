@@ -128,7 +128,7 @@ export default function DataPurchasingPage() {
     }
 
     if (totalCount <= 0) {
-      alert('No sellable rows match the current filters.');
+      alert('No eligible rows match the current filters.');
       return;
     }
 
@@ -175,11 +175,11 @@ export default function DataPurchasingPage() {
             <div>
               <h1 className="text-3xl font-bold">Data Purchasing</h1>
               <p className="mt-2 text-gray-400 max-w-2xl">
-                Browse sellable daily connectivity summaries and price the exact filter slice you want.
+                Browse eligible aggregated daily connectivity summaries and price the exact filter slice you want.
               </p>
             </div>
             <div className="rounded-2xl bg-gray-800 p-4 text-right">
-              <p className="text-sm text-gray-400">Sellable rows</p>
+              <p className="text-sm text-gray-400">Eligible rows</p>
               <p className="text-3xl font-semibold">{loading ? '…' : totalCount}</p>
               {estimatedPrice != null && (
                 <p className="text-sm text-gray-400">Estimated price: ${estimatedPrice}</p>
