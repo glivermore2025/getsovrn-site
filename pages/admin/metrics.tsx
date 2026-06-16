@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { getCurrentUserIsAdmin } from '../../lib/roleAccess';
 import { useRouter } from 'next/router';
+import { fetchAdminJson } from '../../lib/adminApi';
 import {
   LineChart,
   Line,
@@ -9,12 +10,24 @@ import {
   YAxis,
   CartesianGrid,
   Tooltip,
-  ResponsiveContainer
+  ResponsiveContainer,
 } from 'recharts';
 
+type AdminMetricsPayload = {
+  listings: any[];
+  transactions: any[];
+  users: any[];
+};
+
 export default function AdminMetrics() {
-  const [user, setUser] = useState<any>(null);
   const [metrics, setMetrics] = useState<any>({});
+  const [rawMetrics, setRawMetrics] = useState<AdminMetricsPayload>({
+    listings: [],
+    transactions: [],
+    users: [],
+  });
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [currentPage, setCurrentPage] = useState(1);
@@ -24,26 +37,26 @@ export default function AdminMetrics() {
 
   useEffect(() => {
     supabase.auth.getUser().then(async ({ data }) => {
-      const u = data?.user;
-      setUser(u);
-      if (!u || !(await getCurrentUserIsAdmin())) {
+      const user = data?.user;
+      if (!user || !(await getCurrentUserIsAdmin())) {
         router.push('/');
+        return;
       }
+
+      fetchMetrics();
     });
-    fetchMetrics();
   }, []);
 
-  const fetchMetrics = async () => {
-    const [{ data: listings }, { data: transactions }, { data: users }] =
-      await Promise.all([
-        supabase.from('listings').select('*'),
-        supabase.from('transactions').select('*'),
-        supabase.from('profiles').select('*'),
-      ]);
+  useEffect(() => {
+    if (!rawMetrics.listings.length && !rawMetrics.transactions.length && !rawMetrics.users.length) {
+      return;
+    }
+    buildMetrics(rawMetrics);
+  }, [startDate, endDate]);
 
+  const buildMetrics = ({ listings, transactions, users }: AdminMetricsPayload) => {
     let filteredTransactions = transactions || [];
 
-    // Apply date filtering
     if (startDate) {
       filteredTransactions = filteredTransactions.filter(
         (t) => new Date(t.purchased_at) >= new Date(startDate)
@@ -56,14 +69,14 @@ export default function AdminMetrics() {
     }
 
     const revenue = filteredTransactions.reduce(
-      (sum, t) => sum + (t.purchase_price || 0),
+      (sum, t) => sum + Number(t.purchase_price || 0),
       0
     );
 
     const revenueByDay: Record<string, number> = {};
     filteredTransactions.forEach((t) => {
       const date = new Date(t.purchased_at).toISOString().split('T')[0];
-      revenueByDay[date] = (revenueByDay[date] || 0) + (t.purchase_price || 0);
+      revenueByDay[date] = (revenueByDay[date] || 0) + Number(t.purchase_price || 0);
     });
 
     const chartData = Object.entries(revenueByDay).map(([date, amount]) => ({
@@ -71,24 +84,22 @@ export default function AdminMetrics() {
       amount,
     }));
 
-    // Aggregate top-selling listings
     const topListingsMap: Record<string, number> = {};
     filteredTransactions.forEach((t) => {
       topListingsMap[t.listing_id] =
-        (topListingsMap[t.listing_id] || 0) + (t.purchase_price || 0);
+        (topListingsMap[t.listing_id] || 0) + Number(t.purchase_price || 0);
     });
     const topListings = Object.entries(topListingsMap)
       .map(([listing_id, revenue]) => ({ listing_id, revenue }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
 
-    // Aggregate top sellers
-    const topSellersMap: Record<string, number> = {};
+    const topBuyersMap: Record<string, number> = {};
     filteredTransactions.forEach((t) => {
-      topSellersMap[t.buyer_id] =
-        (topSellersMap[t.buyer_id] || 0) + (t.purchase_price || 0);
+      topBuyersMap[t.buyer_id] =
+        (topBuyersMap[t.buyer_id] || 0) + Number(t.purchase_price || 0);
     });
-    const topSellers = Object.entries(topSellersMap)
+    const topBuyers = Object.entries(topBuyersMap)
       .map(([buyer_id, revenue]) => ({ buyer_id, revenue }))
       .sort((a, b) => b.revenue - a.revenue)
       .slice(0, 5);
@@ -100,9 +111,23 @@ export default function AdminMetrics() {
       chartData,
       recentTransactions: filteredTransactions,
       topListings,
-      topSellers,
+      topBuyers,
     });
-    setCurrentPage(1); // Reset pagination on new fetch
+    setCurrentPage(1);
+  };
+
+  const fetchMetrics = async () => {
+    setLoading(true);
+    setError('');
+    try {
+      const data = await fetchAdminJson<AdminMetricsPayload>('/api/admin/metrics');
+      setRawMetrics(data);
+      buildMetrics(data);
+    } catch (err: any) {
+      setError(err?.message ?? 'Failed to load metrics');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const paginatedTransactions = metrics.recentTransactions
@@ -113,7 +138,9 @@ export default function AdminMetrics() {
     <div className="text-white p-8 bg-gray-950 min-h-screen">
       <h1 className="text-3xl font-bold mb-6">Metrics Dashboard</h1>
 
-      {/* Filters */}
+      {loading && <p className="mb-6 text-gray-400">Loading metrics...</p>}
+      {error && <p className="mb-6 text-red-400">{error}</p>}
+
       <div className="bg-gray-800 p-4 rounded mb-8 flex gap-4 items-end">
         <div>
           <label className="block text-sm mb-1">Start Date</label>
@@ -134,7 +161,7 @@ export default function AdminMetrics() {
           />
         </div>
         <button
-          onClick={fetchMetrics}
+          onClick={() => buildMetrics(rawMetrics)}
           className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded"
         >
           Apply Filters
@@ -144,23 +171,22 @@ export default function AdminMetrics() {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
         <div className="bg-gray-800 p-6 rounded">
           <h2 className="text-lg font-semibold">Total Listings</h2>
-          <p className="text-2xl">{metrics.totalListings}</p>
+          <p className="text-2xl">{metrics.totalListings ?? 0}</p>
         </div>
         <div className="bg-gray-800 p-6 rounded">
           <h2 className="text-lg font-semibold">Total Users</h2>
-          <p className="text-2xl">{metrics.totalUsers}</p>
+          <p className="text-2xl">{metrics.totalUsers ?? 0}</p>
         </div>
         <div className="bg-gray-800 p-6 rounded">
           <h2 className="text-lg font-semibold">Total Revenue</h2>
-          <p className="text-2xl">${metrics.totalRevenue}</p>
+          <p className="text-2xl">${metrics.totalRevenue ?? '0.00'}</p>
         </div>
       </div>
 
-      {/* Revenue Chart */}
       <div className="bg-gray-800 p-6 rounded">
         <h2 className="text-lg font-semibold mb-4">Revenue Over Time</h2>
         <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={metrics.chartData}>
+          <LineChart data={metrics.chartData ?? []}>
             <CartesianGrid strokeDasharray="3 3" />
             <XAxis dataKey="date" />
             <YAxis />
@@ -170,31 +196,28 @@ export default function AdminMetrics() {
         </ResponsiveContainer>
       </div>
 
-      {/* Top Selling Listings */}
       <div className="bg-gray-800 p-6 rounded mt-10">
         <h2 className="text-lg font-semibold mb-4">Top Selling Listings</h2>
         <ul>
-          {metrics.topListings?.map((l: any, i: number) => (
-            <li key={i} className="mb-2">
+          {metrics.topListings?.map((l: any) => (
+            <li key={l.listing_id} className="mb-2">
               {l.listing_id}: ${l.revenue.toFixed(2)}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Top Sellers */}
       <div className="bg-gray-800 p-6 rounded mt-10">
-        <h2 className="text-lg font-semibold mb-4">Top Sellers</h2>
+        <h2 className="text-lg font-semibold mb-4">Top Buyers</h2>
         <ul>
-          {metrics.topSellers?.map((s: any, i: number) => (
-            <li key={i} className="mb-2">
-              {s.buyer_id}: ${s.revenue.toFixed(2)}
+          {metrics.topBuyers?.map((buyer: any) => (
+            <li key={buyer.buyer_id} className="mb-2">
+              {buyer.buyer_id}: ${buyer.revenue.toFixed(2)}
             </li>
           ))}
         </ul>
       </div>
 
-      {/* Recent Transactions */}
       <div className="bg-gray-800 p-6 rounded mt-10">
         <h2 className="text-lg font-semibold mb-4">Recent Transactions</h2>
         <table className="w-full text-left">
@@ -207,18 +230,19 @@ export default function AdminMetrics() {
             </tr>
           </thead>
           <tbody>
-            {paginatedTransactions.map((tx: any, i: number) => (
-              <tr key={i} className="border-b border-gray-700">
+            {paginatedTransactions.map((tx: any) => (
+              <tr key={tx.id} className="border-b border-gray-700">
                 <td className="p-2">{tx.buyer_id}</td>
                 <td className="p-2">{tx.listing_id}</td>
-                <td className="p-2">${tx.purchase_price?.toFixed(2)}</td>
-                <td className="p-2">{new Date(tx.purchased_at).toLocaleDateString()}</td>
+                <td className="p-2">${Number(tx.purchase_price ?? 0).toFixed(2)}</td>
+                <td className="p-2">
+                  {tx.purchased_at ? new Date(tx.purchased_at).toLocaleDateString() : '-'}
+                </td>
               </tr>
             ))}
           </tbody>
         </table>
 
-        {/* Pagination Controls */}
         {metrics.recentTransactions?.length > pageSize && (
           <div className="mt-4 flex justify-between">
             <button
