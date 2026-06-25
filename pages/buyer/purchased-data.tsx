@@ -26,10 +26,29 @@ type DatasetPurchase = {
   } | null;
 };
 
+type SafeConnectivityRow = {
+  dataset_id: string;
+  dataset_slug: string;
+  purchase_id: string;
+  date: string;
+  platform: string;
+  carrier: string;
+  primary_network: string;
+  row_count: number;
+  contributor_count: number;
+  avg_uptime_pct: number | null;
+  total_disconnect_count: number;
+  first_rollup_at: string;
+  last_rollup_at: string;
+};
+
 export default function BuyerPurchasedDataPage() {
   const { user, loading: authLoading } = useAuth();
   const [listingPurchases, setListingPurchases] = useState<ListingPurchase[]>([]);
   const [datasetPurchases, setDatasetPurchases] = useState<DatasetPurchase[]>([]);
+  const [safeRowsByPurchase, setSafeRowsByPurchase] = useState<Record<string, SafeConnectivityRow[]>>({});
+  const [safeRowsLoading, setSafeRowsLoading] = useState<Record<string, boolean>>({});
+  const [safeRowsError, setSafeRowsError] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const supabase = getSupabaseClient();
 
@@ -73,6 +92,7 @@ export default function BuyerPurchasedDataPage() {
           `
           )
           .eq('buyer_user_id', user.id)
+          .eq('status', 'completed')
           .order('created_at', { ascending: false }),
       ]);
 
@@ -121,6 +141,45 @@ export default function BuyerPurchasedDataPage() {
     }
   };
 
+  const loadSafeConnectivityRows = async (purchaseId: string) => {
+    setSafeRowsLoading((prev) => ({ ...prev, [purchaseId]: true }));
+    setSafeRowsError((prev) => ({ ...prev, [purchaseId]: '' }));
+
+    const { data, error } = await supabase.rpc('get_purchased_connectivity_daily', {
+      p_purchase_id: purchaseId,
+      p_limit: 10000,
+      p_offset: 0,
+    });
+
+    setSafeRowsLoading((prev) => ({ ...prev, [purchaseId]: false }));
+
+    if (error) {
+      console.error('Safe dataset pull failed:', error);
+      setSafeRowsError((prev) => ({
+        ...prev,
+        [purchaseId]: error.message || 'Failed to pull safe dataset rows.',
+      }));
+      return;
+    }
+
+    setSafeRowsByPurchase((prev) => ({
+      ...prev,
+      [purchaseId]: (data || []) as SafeConnectivityRow[],
+    }));
+  };
+
+  const downloadSafeRows = (purchase: DatasetPurchase) => {
+    const rows = safeRowsByPurchase[purchase.id] || [];
+    const blob = new Blob([JSON.stringify(rows, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const slug = purchase.datasets?.slug || 'dataset';
+    a.href = url;
+    a.download = `sovrn-${slug}-${purchase.id}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
   const hasPurchases = datasetPurchases.length > 0 || listingPurchases.length > 0;
 
   return (
@@ -160,43 +219,82 @@ export default function BuyerPurchasedDataPage() {
               <section className="space-y-4">
                 <h2 className="text-xl font-semibold">Data products</h2>
                 <ul className="space-y-4">
-                  {datasetPurchases.map((purchase) => (
-                    <li key={purchase.id} className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
-                      <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
-                        <div>
-                          <h3 className="text-lg font-semibold">{purchase.datasets?.name || 'Dataset purchase'}</h3>
-                          {purchase.datasets?.description ? (
-                            <p className="mt-2 text-sm text-gray-400">{purchase.datasets.description}</p>
-                          ) : null}
-                          <p className="mt-3 text-xs text-gray-500">
-                            Session {purchase.stripe_session_id || 'pending'} - purchased{' '}
-                            {new Date(purchase.created_at).toLocaleDateString()}
-                          </p>
+                  {datasetPurchases.map((purchase) => {
+                    const safeRows = safeRowsByPurchase[purchase.id] || [];
+                    const isConnectivity = purchase.datasets?.slug === 'connectivity';
+                    const isLoadingRows = safeRowsLoading[purchase.id] || false;
+                    const rowError = safeRowsError[purchase.id];
+
+                    return (
+                      <li key={purchase.id} className="rounded-2xl border border-gray-800 bg-gray-900 p-5">
+                        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between">
+                          <div>
+                            <h3 className="text-lg font-semibold">{purchase.datasets?.name || 'Dataset purchase'}</h3>
+                            {purchase.datasets?.description ? (
+                              <p className="mt-2 text-sm text-gray-400">{purchase.datasets.description}</p>
+                            ) : null}
+                            <p className="mt-3 text-xs text-gray-500">
+                              Session {purchase.stripe_session_id || 'pending'} - purchased{' '}
+                              {new Date(purchase.created_at).toLocaleDateString()}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-gray-950 px-4 py-3 text-right">
+                            <p className="text-sm text-gray-400">Amount paid</p>
+                            <p className="text-lg font-semibold">
+                              {(purchase.currency || 'usd').toUpperCase()}{' '}
+                              {(purchase.gross_revenue_cents / 100).toFixed(2)}
+                            </p>
+                          </div>
                         </div>
-                        <div className="rounded-xl bg-gray-950 px-4 py-3 text-right">
-                          <p className="text-sm text-gray-400">Amount paid</p>
-                          <p className="text-lg font-semibold">
-                            {(purchase.currency || 'usd').toUpperCase()}{' '}
-                            {(purchase.gross_revenue_cents / 100).toFixed(2)}
-                          </p>
+                        <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                          <div className="rounded-xl bg-gray-950 p-4">
+                            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Export</p>
+                            {isConnectivity ? (
+                              <div className="mt-3 space-y-3">
+                                <button
+                                  type="button"
+                                  onClick={() => loadSafeConnectivityRows(purchase.id)}
+                                  disabled={isLoadingRows}
+                                  className="rounded-lg bg-blue-600 px-3 py-2 text-sm font-semibold text-white hover:bg-blue-700 disabled:opacity-60"
+                                >
+                                  {isLoadingRows ? 'Loading...' : 'Load safe export'}
+                                </button>
+                                {safeRows.length > 0 ? (
+                                  <button
+                                    type="button"
+                                    onClick={() => downloadSafeRows(purchase)}
+                                    className="ml-2 rounded-lg border border-gray-700 px-3 py-2 text-sm font-semibold text-gray-200 hover:border-blue-400 hover:text-blue-300"
+                                  >
+                                    Download JSON
+                                  </button>
+                                ) : null}
+                                {rowError ? <p className="text-sm text-red-400">{rowError}</p> : null}
+                                <p className="text-sm text-gray-300">
+                                  {safeRows.length > 0
+                                    ? `${safeRows.length} aggregated rows ready`
+                                    : 'Pulls only buyer-safe aggregated rows.'}
+                                </p>
+                              </div>
+                            ) : (
+                              <p className="mt-2 text-sm text-gray-300">Export coming soon</p>
+                            )}
+                          </div>
+                          <div className="rounded-xl bg-gray-950 p-4">
+                            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">API access</p>
+                            <p className="mt-2 text-sm text-gray-300">
+                              {isConnectivity
+                                ? 'RPC: get_purchased_connectivity_daily'
+                                : 'Coming soon'}
+                            </p>
+                          </div>
+                          <div className="rounded-xl bg-gray-950 p-4">
+                            <p className="text-xs uppercase tracking-[0.2em] text-gray-500">License</p>
+                            <p className="mt-2 text-sm text-gray-300">Standard dataset terms</p>
+                          </div>
                         </div>
-                      </div>
-                      <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                        <div className="rounded-xl bg-gray-950 p-4">
-                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Export</p>
-                          <p className="mt-2 text-sm text-gray-300">Pending generation</p>
-                        </div>
-                        <div className="rounded-xl bg-gray-950 p-4">
-                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">API access</p>
-                          <p className="mt-2 text-sm text-gray-300">Coming soon</p>
-                        </div>
-                        <div className="rounded-xl bg-gray-950 p-4">
-                          <p className="text-xs uppercase tracking-[0.2em] text-gray-500">License</p>
-                          <p className="mt-2 text-sm text-gray-300">Standard dataset terms</p>
-                        </div>
-                      </div>
-                    </li>
-                  ))}
+                      </li>
+                    );
+                  })}
                 </ul>
               </section>
             ) : null}
