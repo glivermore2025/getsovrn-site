@@ -18,7 +18,7 @@ export default function DataQualityPanel({ product }: Props) {
           <p>{product.coverageArea}</p>
         </div>
         <div>
-          <p className="text-gray-400">Sample size</p>
+          <p className="text-gray-400">Available rows</p>
           <p>{product.sampleSize?.toLocaleString() ?? 'TBD'}</p>
         </div>
         <div>
