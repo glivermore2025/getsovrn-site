@@ -4,14 +4,25 @@ import DataQualityPanel from './DataQualityPanel';
 
 interface Props {
   product: DataProduct;
+  href?: string;
+  primaryActionLabel?: string;
   requested?: boolean;
   onRequestAccess: () => void;
   loading: boolean;
 }
 
-export default function DataProductCard({ product, requested, onRequestAccess, loading }: Props) {
-  const priceLabel = product.priceCents != null ? `$${(product.priceCents / 100).toFixed(0)}` : 'Request quote';
+export default function DataProductCard({
+  product,
+  href,
+  primaryActionLabel,
+  requested,
+  onRequestAccess,
+  loading,
+}: Props) {
+  const priceLabel = product.priceCents != null ? `$${(product.priceCents / 100).toFixed(2)}` : 'Request quote';
   const statusLabel = product.status === 'active' ? 'Available' : product.status === 'coming_soon' ? 'Coming soon' : 'Offline';
+  const primaryHref = href ?? `/buyer/datasets/${product.slug}`;
+  const showRequestButton = product.pricingModel === 'request_quote' || product.pricingModel === 'manual_approval';
 
   return (
     <div className="bg-gray-900 rounded-3xl border border-gray-800 p-6 flex flex-col justify-between shadow-sm hover:shadow-blue-500/20 transition">
@@ -24,7 +35,7 @@ export default function DataProductCard({ product, requested, onRequestAccess, l
         <p className="text-sm text-gray-400 leading-6 mb-4 line-clamp-3">{product.description}</p>
         <div className="grid grid-cols-2 gap-3 text-sm text-gray-300 mb-4">
           <div>
-            <p className="text-gray-400">Region</p>
+            <p className="text-gray-400">Coverage</p>
             <p>{product.geography}</p>
           </div>
           <div>
@@ -36,7 +47,7 @@ export default function DataProductCard({ product, requested, onRequestAccess, l
             <p>{product.freshnessDate ? new Date(product.freshnessDate).toLocaleDateString() : 'TBD'}</p>
           </div>
           <div>
-            <p className="text-gray-400">Price</p>
+            <p className="text-gray-400">Unit price</p>
             <p className="text-white font-semibold">{priceLabel}</p>
           </div>
           <div>
@@ -54,21 +65,23 @@ export default function DataProductCard({ product, requested, onRequestAccess, l
       </div>
 
       <div className="mt-4 flex flex-col gap-3">
-        <Link href={`/buyer/datasets/${product.slug}`} className="block text-center rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-3 font-medium transition">
-          Preview Dataset
+        <Link href={primaryHref} className="block text-center rounded-full bg-blue-600 hover:bg-blue-700 px-4 py-3 font-medium transition">
+          {primaryActionLabel ?? 'Open Dataset'}
         </Link>
-        <button
-          type="button"
-          onClick={onRequestAccess}
-          disabled={loading || requested || product.status !== 'active'}
-          className={`w-full rounded-full px-4 py-3 text-sm font-semibold transition ${
-            requested || product.status !== 'active'
-              ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
-              : 'bg-green-600 hover:bg-green-700 text-white'
-          }`}
-        >
-          {requested ? 'Access requested' : loading ? 'Requesting…' : 'Request Access'}
-        </button>
+        {showRequestButton ? (
+          <button
+            type="button"
+            onClick={onRequestAccess}
+            disabled={loading || requested || product.status !== 'active'}
+            className={`w-full rounded-full px-4 py-3 text-sm font-semibold transition ${
+              requested || product.status !== 'active'
+                ? 'bg-gray-700 text-gray-400 cursor-not-allowed'
+                : 'bg-green-600 hover:bg-green-700 text-white'
+            }`}
+          >
+            {requested ? 'Access requested' : loading ? 'Requesting...' : 'Request Access'}
+          </button>
+        ) : null}
       </div>
     </div>
   );
