@@ -1,71 +1,22 @@
 import Head from 'next/head';
 import { useEffect, useMemo, useState } from 'react';
-import { getSupabaseClient } from '../../lib/supabaseClient';
 import { DataProduct } from '../../lib/types';
-import { useAuth } from '../../lib/authContext';
 import DataProductFilters from '../../components/buyer/DataProductFilters';
 import DataProductCard from '../../components/buyer/DataProductCard';
 import EmptyState from '../../components/EmptyState';
 
-const supabase = getSupabaseClient();
+type MarketplaceProduct = DataProduct & {
+  href?: string;
+  safeCohorts?: number;
+};
 
-const demoProducts: DataProduct[] = [
-  {
-    id: 'demo-1',
-    name: 'Houston Connectivity Signals',
-    slug: 'houston-connectivity-signals',
-    description: 'Aggregated device and network context from opted-in contributors in the Houston metro area.',
-    category: 'Device & Connectivity',
-    buyerUseCase: 'Mobility analytics, network planning, local market research',
-    geography: 'Houston Metro',
-    coverageArea: 'ZIP code + day',
-    dataSources: ['Opt-in mobile signals', 'Network telemetry'],
-    aggregationLevel: 'ZIP code + day',
-    refreshFrequency: 'Daily',
-    freshnessDate: new Date().toISOString(),
-    sampleSize: 25,
-    recordCount: null,
-    contributorCount: 18400,
-    qualityScore: 88,
-    confidenceScore: 91,
-    privacyLevel: 'Aggregated, consent-backed',
-    priceCents: null,
-    pricingModel: 'request_quote',
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-  {
-    id: 'demo-2',
-    name: 'West Coast Consumer Pulse',
-    slug: 'west-coast-consumer-pulse',
-    description: 'Consent-backed aggregated insights for regional purchase intent, foot traffic, and audience movement.',
-    category: 'Consumer Pulse',
-    buyerUseCase: 'Retail planning, campaign targeting, trend analysis',
-    geography: 'California Coast',
-    coverageArea: 'Metro region',
-    dataSources: ['Opt-in consumer surveys', 'Aggregated app activity'],
-    aggregationLevel: 'County + week',
-    refreshFrequency: 'Weekly',
-    freshnessDate: new Date().toISOString(),
-    sampleSize: 18,
-    recordCount: null,
-    contributorCount: 13200,
-    qualityScore: 82,
-    confidenceScore: 86,
-    privacyLevel: 'Aggregated, consent-backed',
-    priceCents: null,
-    pricingModel: 'request_quote',
-    status: 'active',
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString(),
-  },
-];
+type MarketplaceResponse = {
+  products: MarketplaceProduct[];
+  generatedAt: string;
+};
 
 export default function BuyerMarketplacePage() {
-  const { user, loading: authLoading } = useAuth();
-  const [products, setProducts] = useState<DataProduct[]>([]);
-  const [accessStatusMap, setAccessStatusMap] = useState<Record<string, string>>({});
+  const [products, setProducts] = useState<MarketplaceProduct[]>([]);
   const [search, setSearch] = useState('');
   const [category, setCategory] = useState('all');
   const [geography, setGeography] = useState('all');
@@ -77,19 +28,17 @@ export default function BuyerMarketplacePage() {
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [minQuality, setMinQuality] = useState('');
-  const [loadingRequest, setLoadingRequest] = useState<string | null>(null);
   const [sortKey, setSortKey] = useState('relevance');
   const [loadingProducts, setLoadingProducts] = useState(true);
-
-  const isDemo = products.length === 0 && !loadingProducts;
-  const marketplaceProducts = products.length > 0 ? products : demoProducts;
+  const [loadError, setLoadError] = useState('');
+  const [generatedAt, setGeneratedAt] = useState<string | null>(null);
 
   const filtered = useMemo(() => {
     const minPriceNumber = Number(minPrice);
     const maxPriceNumber = Number(maxPrice);
     const qualityNumber = Number(minQuality);
 
-    return marketplaceProducts.filter((product) => {
+    return products.filter((product) => {
       if (category !== 'all' && product.category !== category) return false;
       if (geography !== 'all' && product.geography !== geography) return false;
       if (useCase !== 'all' && product.buyerUseCase !== useCase) return false;
@@ -111,9 +60,9 @@ export default function BuyerMarketplacePage() {
       if (!Number.isNaN(minPriceNumber) && product.priceCents != null && product.priceCents < minPriceNumber * 100) return false;
       if (!Number.isNaN(maxPriceNumber) && product.priceCents != null && product.priceCents > maxPriceNumber * 100) return false;
       if (!Number.isNaN(qualityNumber) && product.qualityScore != null && product.qualityScore < qualityNumber) return false;
-      return product.status === 'active';
+      return product.status === 'active' || product.status === 'coming_soon';
     });
-  }, [marketplaceProducts, category, geography, useCase, refreshFrequency, aggregationLevel, search, minPrice, maxPrice, minQuality, pricingModel]);
+  }, [products, category, geography, useCase, refreshFrequency, aggregationLevel, privacyLevel, search, minPrice, maxPrice, minQuality, pricingModel]);
 
   const sortedProducts = useMemo(() => {
     const items = [...filtered];
@@ -121,151 +70,118 @@ export default function BuyerMarketplacePage() {
       case 'price':
         return items.sort((a, b) => (a.priceCents ?? 0) - (b.priceCents ?? 0));
       case 'coverage':
-        return items.sort((a, b) => (b.contributorCount ?? 0) - (a.contributorCount ?? 0));
+        return items.sort((a, b) => (b.recordCount ?? 0) - (a.recordCount ?? 0));
       case 'quality':
         return items.sort((a, b) => (b.qualityScore ?? 0) - (a.qualityScore ?? 0));
       case 'newest':
-        return items.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        return items.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
       default:
-        return items;
+        return items.sort((a, b) => {
+          if (a.status !== b.status) return a.status === 'active' ? -1 : 1;
+          return (b.safeCohorts ?? 0) - (a.safeCohorts ?? 0);
+        });
     }
   }, [filtered, sortKey]);
 
   const categories = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.category))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.category))),
+    [products]
   );
   const geographies = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.geography))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.geography))),
+    [products]
   );
   const useCases = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.buyerUseCase))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.buyerUseCase))),
+    [products]
   );
   const refreshFrequencies = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.refreshFrequency))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.refreshFrequency))),
+    [products]
   );
   const aggregationLevels = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.aggregationLevel))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.aggregationLevel))),
+    [products]
   );
   const privacyLevels = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.privacyLevel))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.privacyLevel))),
+    [products]
   );
   const pricingModels = useMemo(
-    () => Array.from(new Set(marketplaceProducts.map((product) => product.pricingModel))),
-    [marketplaceProducts]
+    () => Array.from(new Set(products.map((product) => product.pricingModel))),
+    [products]
   );
 
   useEffect(() => {
     fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (user) {
-      fetchAccessRequests(user.id);
-    }
-  }, [user]);
-
   const fetchProducts = async () => {
     setLoadingProducts(true);
-    const { data, error } = await supabase.from('data_products').select('*');
-    if (error) {
-      console.error('Failed to load products', error);
-      setProducts([]);
-    } else {
-      setProducts(data || []);
-    }
-    setLoadingProducts(false);
-  };
-
-  const fetchAccessRequests = async (buyerId: string) => {
-    const { data, error } = await supabase
-      .from('buyer_access_requests')
-      .select('data_product_id, status')
-      .eq('buyer_id', buyerId);
-
-    if (error) {
-      console.error('Failed to load access requests', error);
-      return;
-    }
-    const map: Record<string, string> = {};
-    (data || []).forEach((request: any) => {
-      map[request.data_product_id] = request.status;
-    });
-    setAccessStatusMap(map);
-  };
-
-  const handleRequestAccess = async (productId: string) => {
-    if (!user) {
-      alert('Please sign in to request access.');
-      return;
-    }
-    setLoadingRequest(productId);
+    setLoadError('');
     try {
-      const { data: existing, error: existingErr } = await supabase
-        .from('buyer_access_requests')
-        .select('id')
-        .eq('buyer_id', user.id)
-        .eq('data_product_id', productId)
-        .maybeSingle();
+      const response = await fetch('/api/buyer/marketplace');
+      const payload = (await response.json()) as MarketplaceResponse & { error?: string };
 
-      if (existingErr) {
-        console.error(existingErr);
-        alert('Could not verify existing request.');
-      } else if (existing) {
-        alert('You already have an access request for this dataset.');
-      } else {
-        const { error } = await supabase.from('buyer_access_requests').insert([
-          {
-            buyer_id: user.id,
-            data_product_id: productId,
-            status: 'pending',
-            requested_use_case: 'Market analysis',
-            buyer_notes: 'Looking to explore local market connectivity and demand signals.',
-          },
-        ]);
-
-        if (error) {
-          console.error('Request submit failed', error);
-          alert('Failed to request access.');
-        } else {
-          setAccessStatusMap((prev) => ({ ...prev, [productId]: 'pending' }));
-          alert('Access request submitted. An admin will review it shortly.');
-        }
+      if (!response.ok) {
+        throw new Error(payload.error || 'Failed to load marketplace inventory');
       }
-    } catch (e) {
-      console.error(e);
-      alert('Something went wrong while requesting access.');
+
+      setProducts(payload.products || []);
+      setGeneratedAt(payload.generatedAt || null);
+    } catch (error: any) {
+      console.error('Failed to load marketplace products', error);
+      setLoadError(error?.message || 'Failed to load marketplace inventory');
+      setProducts([]);
     } finally {
-      setLoadingRequest(null);
+      setLoadingProducts(false);
     }
   };
+
+  const activeProducts = products.filter((product) => product.status === 'active');
+  const totalAvailableRows = products.reduce((sum, product) => sum + (product.recordCount ?? 0), 0);
+  const totalSafeCohorts = products.reduce((sum, product) => sum + (product.safeCohorts ?? 0), 0);
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head>
-        <title>Buyer Marketplace – Sovrn</title>
+        <title>Buyer Marketplace - Sovrn</title>
       </Head>
 
       <div className="max-w-screen-2xl mx-auto space-y-6">
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8 shadow-sm">
-          <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div>
               <h1 className="text-4xl font-bold">Buyer Marketplace</h1>
               <p className="mt-3 text-gray-400 max-w-3xl text-lg">
-                Browse premium local data products with clear coverage, freshness, privacy, and buyer use cases.
-                Request access to the datasets you want to evaluate or purchase.
+                Browse live, consent-backed data products with buyer-safe aggregation, current availability, and purchase-ready pricing.
               </p>
+              {generatedAt ? (
+                <p className="mt-3 text-xs text-gray-500">Inventory refreshed {new Date(generatedAt).toLocaleString()}</p>
+              ) : null}
             </div>
-            <div className="rounded-3xl border border-blue-600 bg-blue-950/30 px-5 py-4 text-sm text-blue-200">
-              {isDemo ? 'Sample marketplace view — live inventory coming soon.' : 'Pilot marketplace preview with privacy-safe aggregated dataset samples.'}
+            <div className="grid gap-3 sm:grid-cols-3 lg:min-w-[520px]">
+              <div className="rounded-2xl border border-blue-600 bg-blue-950/30 px-5 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-blue-300">Products</p>
+                <p className="mt-2 text-2xl font-semibold">{loadingProducts ? '...' : activeProducts.length}</p>
+              </div>
+              <div className="rounded-2xl border border-gray-800 bg-gray-950 px-5 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Safe cohorts</p>
+                <p className="mt-2 text-2xl font-semibold">{loadingProducts ? '...' : totalSafeCohorts}</p>
+              </div>
+              <div className="rounded-2xl border border-gray-800 bg-gray-950 px-5 py-4">
+                <p className="text-xs uppercase tracking-[0.2em] text-gray-500">Rows</p>
+                <p className="mt-2 text-2xl font-semibold">{loadingProducts ? '...' : totalAvailableRows}</p>
+              </div>
             </div>
           </div>
         </section>
+
+        {loadError ? (
+          <div className="rounded-2xl border border-red-500 bg-red-950 p-4 text-sm text-red-200">
+            {loadError}
+          </div>
+        ) : null}
 
         <section className="grid gap-8 xl:grid-cols-[320px_1fr]">
           <aside className="space-y-6 rounded-3xl border border-gray-800 bg-gray-900 p-6">
@@ -320,25 +236,25 @@ export default function BuyerMarketplacePage() {
                     onChange={(e) => setSortKey(e.target.value)}
                     className="rounded-3xl border border-gray-800 bg-gray-950 px-4 py-3 text-sm text-white focus:border-blue-500 focus:outline-none"
                   >
-                    <option value="relevance">Relevance</option>
+                    <option value="relevance">Availability</option>
                     <option value="newest">Newest</option>
                     <option value="price">Price</option>
-                    <option value="coverage">Coverage</option>
+                    <option value="coverage">Rows</option>
                     <option value="quality">Quality</option>
                   </select>
                 </label>
               </div>
             </div>
 
-            {authLoading || loadingProducts ? (
+            {loadingProducts ? (
               <div className="flex items-center justify-center py-20">
                 <div className="w-6 h-6 border-2 border-gray-600 border-t-white rounded-full animate-spin" />
               </div>
             ) : sortedProducts.length === 0 ? (
               <EmptyState
                 title="No datasets match this view yet"
-                body="Sovrn is currently onboarding new consented datasets. Join the buyer waitlist to get notified when inventory becomes available."
-                ctaLabel="Request Buyer Access"
+                body="Live datasets will appear here as soon as enough consented contributor data clears the buyer-safe cohort threshold."
+                ctaLabel="Request Custom Dataset"
                 ctaHref="/buyer/request-custom-dataset"
               />
             ) : (
@@ -347,9 +263,11 @@ export default function BuyerMarketplacePage() {
                   <DataProductCard
                     key={product.id}
                     product={product}
-                    requested={Boolean(accessStatusMap[product.id])}
-                    loading={loadingRequest === product.id}
-                    onRequestAccess={() => handleRequestAccess(product.id)}
+                    href={product.href}
+                    primaryActionLabel={product.status === 'active' ? 'Open live dataset' : 'View dataset'}
+                    requested={false}
+                    loading={false}
+                    onRequestAccess={() => undefined}
                   />
                 ))}
               </div>
