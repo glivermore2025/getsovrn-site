@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import Head from 'next/head';
+import Link from 'next/link';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
 
@@ -194,6 +195,9 @@ export default function BuyerPurchasedDataPage() {
           <p className="mt-2 text-gray-400">
             Review purchased data products, query receipts, and downloadable legacy files.
           </p>
+          <Link href="/faq#how-to" className="mt-5 inline-flex rounded-full border border-gray-700 px-4 py-2 text-sm font-semibold text-white hover:border-blue-400 hover:text-blue-300">
+            How to access purchased data
+          </Link>
         </header>
 
         {authLoading || loading ? (
