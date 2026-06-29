@@ -71,6 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <Link href="/#how-it-works" className="hover:text-blue-400">How It Works</Link>
             <Link href="/for-consumers" className="hover:text-blue-400">For Sellers</Link>
             <Link href="/for-buyers" className="hover:text-blue-400">For Buyers</Link>
+            <Link href="/buyer" className="hover:text-blue-400">Buyer Portal</Link>
             <Link href="/market" className="hover:text-blue-400">Market Insights</Link>
           </nav>
 
@@ -115,6 +116,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             </Link>
             <Link href="/for-buyers" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
               For Buyers
+            </Link>
+            <Link href="/buyer" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
+              Buyer Portal
             </Link>
             <Link href="/market" className="block text-base font-medium hover:text-blue-400" onClick={() => setMobileMenuOpen(false)}>
               Market Insights

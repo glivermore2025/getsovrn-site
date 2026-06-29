@@ -44,7 +44,7 @@ export default function BuyerDashboardPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
       <Head>
-        <title>Buyer Dashboard – Sovrn</title>
+        <title>Buyer Dashboard - Sovrn</title>
       </Head>
 
       <div className="max-w-5xl mx-auto space-y-6">
@@ -60,10 +60,13 @@ export default function BuyerDashboardPage() {
             <div>
               <h2 className="text-2xl font-semibold">Next steps</h2>
               <p className="mt-3 text-gray-400 max-w-2xl">
-                Continue the buyer journey with our curated marketplace or submit a custom dataset request if you need tailored coverage.
+                Continue the buyer journey with live purchasing, the curated marketplace, or a custom dataset request if you need tailored coverage.
               </p>
             </div>
             <div className="flex flex-wrap gap-3">
+              <a href="/buyer/data-purchasing" className="rounded-full bg-green-600 px-5 py-3 text-sm font-semibold text-white hover:bg-green-700">
+                Purchase Live Data
+              </a>
               <a href="/buyer/marketplace" className="rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700">
                 Browse Marketplace
               </a>

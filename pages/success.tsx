@@ -92,13 +92,13 @@ export default function SuccessPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head>
-        <title>Success – Sovrn</title>
+        <title>Purchase Successful - Sovrn</title>
       </Head>
 
       <h1 className="text-3xl font-bold mb-6">Purchase Successful</h1>
 
       {loading ? (
-        <p>Loading…</p>
+        <p>Loading...</p>
       ) : errMsg ? (
         <p className="text-red-400">{errMsg}</p>
       ) : !payload ? (
@@ -111,12 +111,20 @@ export default function SuccessPage() {
           {payload.dataset.description && (
             <p className="text-gray-300 mb-4">{payload.dataset.description}</p>
           )}
-          <button
-            onClick={handleGoToPurchasedData}
-            className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-medium"
-          >
-            View Purchased Data
-          </button>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              onClick={handleGoToPurchasedData}
+              className="bg-blue-600 hover:bg-blue-700 px-4 py-2 rounded text-sm font-medium"
+            >
+              View Purchased Data
+            </button>
+            <button
+              onClick={() => router.push('/buyer/data-purchasing')}
+              className="border border-gray-600 hover:border-blue-400 px-4 py-2 rounded text-sm font-medium"
+            >
+              Continue Purchasing
+            </button>
+          </div>
         </div>
       ) : (
         <div className="bg-gray-800 p-6 rounded shadow-md max-w-md">
@@ -131,7 +139,7 @@ export default function SuccessPage() {
             disabled={downloading}
             className="bg-green-600 hover:bg-green-700 px-4 py-2 rounded text-sm font-medium disabled:opacity-60"
           >
-            {downloading ? 'Preparing…' : 'Download Your Data'}
+            {downloading ? 'Preparing...' : 'Download Your Data'}
           </button>
         </div>
       )}

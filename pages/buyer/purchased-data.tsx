@@ -204,14 +204,22 @@ export default function BuyerPurchasedDataPage() {
           <div className="rounded-3xl border border-dashed border-gray-800 bg-gray-900 p-12 text-center text-gray-400">
             <p className="text-lg font-semibold text-white">Sign in to view your purchased datasets.</p>
             <p className="mt-3">Visit the buyer dashboard or marketplace to request access to new data products.</p>
+            <a href="/buyer/data-purchasing" className="mt-6 inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+              Preview Live Dataset
+            </a>
           </div>
         ) : !hasPurchases ? (
           <div className="rounded-3xl border border-dashed border-gray-800 bg-gray-900 p-12 text-center text-gray-400">
             <p className="text-lg font-semibold text-white">No purchases found.</p>
             <p className="mt-3">Purchased data products and approved exports will appear here.</p>
-            <a href="/buyer/marketplace" className="mt-6 inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
-              Browse Marketplace
-            </a>
+            <div className="mt-6 flex flex-col items-center justify-center gap-3 sm:flex-row">
+              <a href="/buyer/data-purchasing" className="inline-flex rounded-full bg-green-600 px-6 py-3 text-sm font-semibold text-white hover:bg-green-700">
+                Purchase Live Data
+              </a>
+              <a href="/buyer/marketplace" className="inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+                Browse Marketplace
+              </a>
+            </div>
           </div>
         ) : (
           <div className="space-y-8">
@@ -292,6 +300,11 @@ export default function BuyerPurchasedDataPage() {
                             <p className="mt-2 text-sm text-gray-300">Standard dataset terms</p>
                           </div>
                         </div>
+                        {isConnectivity ? (
+                          <a href="/buyer/data-purchasing" className="mt-4 inline-flex rounded-full border border-gray-700 px-4 py-2 text-sm font-semibold text-white hover:border-blue-400 hover:text-blue-300">
+                            Open connectivity purchase flow
+                          </a>
+                        ) : null}
                       </li>
                     );
                   })}

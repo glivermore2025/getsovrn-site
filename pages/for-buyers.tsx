@@ -5,7 +5,7 @@ export default function ForBuyersPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white">
       <Head>
-        <title>For Buyers – Sovrn</title>
+        <title>For Buyers - Sovrn</title>
         <meta
           name="description"
           content="Buy privacy-safe, decision-ready local data products from consented contributors."
@@ -24,6 +24,9 @@ export default function ForBuyersPage() {
               </p>
 
               <div className="mt-8 flex flex-col gap-4 sm:flex-row">
+                <Link href="/buyer/data-purchasing" className="inline-flex items-center justify-center rounded-full bg-green-600 px-8 py-3 text-sm font-semibold text-white hover:bg-green-700 transition">
+                  Preview Live Dataset
+                </Link>
                 <Link href="/buyer/marketplace" className="inline-flex items-center justify-center rounded-full bg-blue-600 px-8 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition">
                   Explore Marketplace
                 </Link>
@@ -45,6 +48,9 @@ export default function ForBuyersPage() {
                 <p><span className="font-semibold text-white">Aggregation:</span> ZIP-code daily</p>
                 <p><span className="font-semibold text-white">Privacy:</span> Aggregated only, no individual-level records.</p>
               </div>
+              <Link href="/buyer/data-purchasing" className="mt-6 inline-flex items-center justify-center rounded-full bg-blue-600 px-5 py-3 text-sm font-semibold text-white hover:bg-blue-700 transition">
+                Filter and price connectivity data
+              </Link>
             </div>
           </div>
         </section>
@@ -101,10 +107,10 @@ export default function ForBuyersPage() {
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8">
           <h2 className="text-2xl font-semibold">Buyer workflow</h2>
           <ol className="mt-6 space-y-4 text-gray-300">
-            <li><span className="font-semibold text-white">1.</span> Browse curated data products.</li>
-            <li><span className="font-semibold text-white">2.</span> Preview safe aggregated dataset samples.</li>
-            <li><span className="font-semibold text-white">3.</span> Request access or a custom dataset.</li>
-            <li><span className="font-semibold text-white">4.</span> Receive approved exports or reports.</li>
+            <li><span className="font-semibold text-white">1.</span> Browse live data products in the buyer marketplace.</li>
+            <li><span className="font-semibold text-white">2.</span> Open the purchasing flow to preview safe aggregated rows and tune filters.</li>
+            <li><span className="font-semibold text-white">3.</span> Purchase the eligible dataset slice or request a custom dataset.</li>
+            <li><span className="font-semibold text-white">4.</span> Review purchased data and receipts from the buyer portal.</li>
           </ol>
         </section>
       </main>

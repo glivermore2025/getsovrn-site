@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
 import axios from 'axios';
 import { getSupabaseClient } from '../../lib/supabaseClient';
@@ -91,7 +92,7 @@ export default function DataPurchasingPage() {
       } = await supabase.auth.getSession();
 
       if (!session?.access_token) {
-        throw new Error('Please log in to preview buyer datasets.');
+        throw new Error('Please sign in to preview buyer datasets.');
       }
 
       const response = await axios.post<PreviewResponse>(
@@ -139,7 +140,7 @@ export default function DataPurchasingPage() {
       } = await supabase.auth.getUser();
 
       if (!user) {
-        alert('Please log in to purchase access.');
+        alert('Please sign in to purchase access.');
         return;
       }
 
@@ -166,21 +167,38 @@ export default function DataPurchasingPage() {
   return (
     <div className="min-h-screen bg-gray-950 text-white p-8">
       <Head>
-        <title>Data Purchasing – Sovrn</title>
+        <title>Data Purchasing - Sovrn</title>
       </Head>
 
       <div className="max-w-6xl mx-auto space-y-6">
+        <nav className="flex flex-wrap items-center gap-2 text-sm text-gray-400">
+          <Link href="/buyer" className="hover:text-blue-300">Buyer Portal</Link>
+          <span>/</span>
+          <Link href="/buyer/marketplace" className="hover:text-blue-300">Marketplace</Link>
+          <span>/</span>
+          <span className="text-white">Connectivity purchase</span>
+        </nav>
+
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8 shadow-sm">
           <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
             <div>
-              <h1 className="text-3xl font-bold">Data Purchasing</h1>
+              <p className="text-sm uppercase tracking-[0.3em] text-blue-400">Live purchase flow</p>
+              <h1 className="mt-3 text-3xl font-bold">Connectivity Data Purchasing</h1>
               <p className="mt-2 text-gray-400 max-w-2xl">
-                Browse eligible aggregated daily connectivity summaries and price the exact filter slice you want.
+                Preview buyer-safe daily connectivity cohorts, filter the exact slice you need, then purchase the matching dataset rows.
               </p>
+              <div className="mt-5 flex flex-wrap gap-3">
+                <Link href="/buyer/marketplace" className="rounded-full border border-gray-700 px-4 py-2 text-sm font-semibold text-white hover:border-blue-400 hover:text-blue-300">
+                  Back to Marketplace
+                </Link>
+                <Link href="/buyer/purchased-data" className="rounded-full border border-gray-700 px-4 py-2 text-sm font-semibold text-white hover:border-blue-400 hover:text-blue-300">
+                  View Purchased Data
+                </Link>
+              </div>
             </div>
             <div className="rounded-2xl bg-gray-800 p-4 text-right">
               <p className="text-sm text-gray-400">Eligible rows</p>
-              <p className="text-3xl font-semibold">{loading ? '…' : totalCount}</p>
+              <p className="text-3xl font-semibold">{loading ? '...' : totalCount}</p>
               {estimatedPrice != null && (
                 <p className="text-sm text-gray-400">Estimated price: ${estimatedPrice}</p>
               )}
@@ -296,7 +314,7 @@ export default function DataPurchasingPage() {
               className="mt-6 w-full rounded-xl bg-blue-600 px-4 py-3 text-white hover:bg-blue-500 disabled:opacity-60"
               disabled={loading}
             >
-              {loading ? 'Refreshing…' : 'Refresh Preview'}
+              {loading ? 'Refreshing...' : 'Refresh Preview'}
             </button>
           </aside>
 
@@ -313,7 +331,7 @@ export default function DataPurchasingPage() {
                   disabled={buying || loading || totalCount <= 0 || !dataset}
                   className="rounded-xl bg-green-600 px-4 py-3 text-white hover:bg-green-500 disabled:opacity-60"
                 >
-                  {buying ? 'Purchasing…' : 'Purchase Dataset'}
+                  {buying ? 'Purchasing...' : 'Purchase Dataset'}
                 </button>
               </div>
 
@@ -328,7 +346,7 @@ export default function DataPurchasingPage() {
                 </div>
                 <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-400">Rows</p>
-                  <p className="mt-2 text-lg font-semibold">{loading ? '…' : totalCount}</p>
+                  <p className="mt-2 text-lg font-semibold">{loading ? '...' : totalCount}</p>
                 </div>
                 <div className="rounded-2xl border border-gray-800 bg-gray-950 p-4">
                   <p className="text-xs uppercase tracking-[0.2em] text-gray-400">Estimate</p>
@@ -353,7 +371,7 @@ export default function DataPurchasingPage() {
                     {rows.length === 0 ? (
                       <tr>
                         <td colSpan={7} className="p-4 text-center text-gray-400">
-                          {loading ? 'Loading preview…' : 'No preview rows match the selected filters.'}
+                          {loading ? 'Loading preview...' : 'No preview rows match the selected filters.'}
                         </td>
                       </tr>
                     ) : (
