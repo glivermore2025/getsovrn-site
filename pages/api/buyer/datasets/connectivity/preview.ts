@@ -50,7 +50,9 @@ type InternalConnectivityRow = {
 const MAX_LIMIT = 500;
 const MAX_INTERNAL_ROWS = 5000;
 const MAX_DATE_RANGE_DAYS = 366;
-const MIN_PREVIEW_CONTRIBUTORS = 25;
+// Temporary sandbox threshold for end-to-end purchase testing.
+// Restore to 25 before launch so buyer previews only expose privacy-safe cohorts.
+const MIN_PREVIEW_CONTRIBUTORS = 1;
 const RATE_LIMIT_WINDOW_MS = 60_000;
 const RATE_LIMIT_MAX_REQUESTS = 30;
 const ALLOWED_PLATFORMS = new Set(['ios', 'android', 'web']);

@@ -39,6 +39,7 @@ export default function DataPurchasingPage() {
   const [dataset, setDataset] = useState<Dataset | null>(null);
   const [rows, setRows] = useState<PreviewRow[]>([]);
   const [totalCount, setTotalCount] = useState(0);
+  const [minPreviewContributorCount, setMinPreviewContributorCount] = useState(25);
   const [loading, setLoading] = useState(false);
   const [buying, setBuying] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -106,6 +107,7 @@ export default function DataPurchasingPage() {
       );
       setRows(response.data.rows);
       setTotalCount(response.data.totalCount);
+      setMinPreviewContributorCount(response.data.minPreviewContributorCount);
     } catch (err: any) {
       console.error('Preview error:', err);
       setError(err?.response?.data?.error || err.message || 'Failed to fetch preview.');
@@ -324,7 +326,7 @@ export default function DataPurchasingPage() {
                 <div>
                   <h2 className="text-2xl font-semibold">Preview</h2>
                   <p className="text-gray-400">Query the transformed daily connectivity dataset and inspect the matching rows.</p>
-                  <p className="mt-1 text-sm text-gray-500">Only cohorts with at least 25 contributors are previewed.</p>
+                  <p className="mt-1 text-sm text-gray-500">Only cohorts with at least {minPreviewContributorCount} contributor{minPreviewContributorCount === 1 ? '' : 's'} are previewed.</p>
                 </div>
                 <button
                   onClick={handlePurchase}
