@@ -21,10 +21,12 @@ export default function RequestCustomDatasetPage() {
   const [notes, setNotes] = useState('');
   const [status, setStatus] = useState<'idle' | 'submitting' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
+  const [notificationWarning, setNotificationWarning] = useState<string | null>(null);
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError(null);
+    setNotificationWarning(null);
     setStatus('submitting');
 
     if (!user) {
@@ -40,32 +42,48 @@ export default function RequestCustomDatasetPage() {
     }
 
     try {
-      const { error: insertError } = await supabase.from('custom_dataset_requests').insert([
-        {
-          buyer_id: user.id,
-          buyer_name: buyerName,
-          company_name: companyName,
-          email,
-          target_geography: targetGeography,
-          data_category: dataCategory,
-          use_case: useCase,
-          refresh_cadence: refreshCadence,
-          aggregation_level: aggregationLevel,
-          timeline,
-          budget_range: budgetRange,
-          notes,
-          status: 'new',
-        },
-      ]);
+      const {
+        data: { session },
+      } = await supabase.auth.getSession();
 
-      if (insertError) {
-        throw insertError;
+      if (!session?.access_token) {
+        throw new Error('Your session expired. Please sign in again.');
+      }
+
+      const response = await fetch('/api/buyer/custom-dataset-request', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${session.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          buyerName,
+          companyName,
+          email,
+          targetGeography,
+          dataCategory,
+          useCase,
+          refreshCadence,
+          aggregationLevel,
+          timeline,
+          budgetRange,
+          notes,
+        }),
+      });
+      const result = await response.json();
+
+      if (!response.ok) {
+        throw new Error(result?.error || 'Unable to submit your request.');
+      }
+
+      if (result?.notification?.sent === false) {
+        setNotificationWarning('Your request was saved, but the email notification did not send. Sovrn can still review it from the admin dashboard.');
       }
 
       setStatus('success');
     } catch (err: any) {
       console.error('Request submission failed', err);
-      setError('Unable to submit your request. Please try again.');
+      setError(err?.message || 'Unable to submit your request. Please try again.');
       setStatus('error');
     }
   };
@@ -237,6 +255,7 @@ export default function RequestCustomDatasetPage() {
             {status === 'success' && (
               <div className="rounded-2xl bg-green-950 border border-green-700 p-4 text-sm text-green-300">
                 <p>Your request has been submitted. We will follow up with next steps soon.</p>
+                {notificationWarning && <p className="mt-2 text-yellow-200">{notificationWarning}</p>}
                 <Link href="/buyer/dashboard" className="mt-3 inline-flex text-green-200 underline">
                   Track this request in Buyer Dashboard
                 </Link>
