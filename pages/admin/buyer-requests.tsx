@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { getCurrentUserIsAdmin } from '../../lib/roleAccess';
 import { useRouter } from 'next/router';
-import { BuyerAccessRequest, DataProduct } from '../../lib/types';
+import { BuyerAccessRequest, CustomDatasetRequest, DataProduct } from '../../lib/types';
 import BuyerAccessRequestTable from '../../components/admin/BuyerAccessRequestTable';
 
 const supabase = getSupabaseClient();
@@ -11,6 +11,7 @@ const supabase = getSupabaseClient();
 export default function AdminBuyerRequests() {
   const [user, setUser] = useState<any>(null);
   const [requests, setRequests] = useState<BuyerAccessRequest[]>([]);
+  const [customRequests, setCustomRequests] = useState<CustomDatasetRequest[]>([]);
   const [productsMap, setProductsMap] = useState<Record<string, DataProduct>>({});
   const [loading, setLoading] = useState(true);
   const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
@@ -29,17 +30,23 @@ export default function AdminBuyerRequests() {
 
   const loadRequests = async () => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('buyer_access_requests')
-      .select('*, data_products(*)')
-      .order('created_at', { ascending: false });
+    const [accessResult, customResult] = await Promise.all([
+      supabase
+        .from('buyer_access_requests')
+        .select('*, data_products(*)')
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('custom_dataset_requests')
+        .select('*')
+        .order('created_at', { ascending: false }),
+    ]);
 
-    if (error) {
-      console.error('Failed to load buyer requests', error);
+    if (accessResult.error) {
+      console.error('Failed to load buyer requests', accessResult.error);
       setRequests([]);
       setProductsMap({});
     } else {
-      const loaded = (data || []).map((item: any) => item as BuyerAccessRequest & { data_products?: DataProduct });
+      const loaded = (accessResult.data || []).map((item: any) => item as BuyerAccessRequest & { data_products?: DataProduct });
       setRequests(loaded);
       const map: Record<string, DataProduct> = {};
       loaded.forEach((item) => {
@@ -49,6 +56,14 @@ export default function AdminBuyerRequests() {
       });
       setProductsMap(map);
     }
+
+    if (customResult.error) {
+      console.error('Failed to load custom dataset requests', customResult.error);
+      setCustomRequests([]);
+    } else {
+      setCustomRequests((customResult.data || []) as CustomDatasetRequest[]);
+    }
+
     setLoading(false);
   };
 
@@ -61,6 +76,25 @@ export default function AdminBuyerRequests() {
     if (error) {
       console.error('Failed to update request status', error);
       alert('Unable to update request status.');
+    } else {
+      await loadRequests();
+    }
+    setActionLoadingId(null);
+  };
+
+  const handleCustomAction = async (requestId: string, action: 'in_review' | 'approved' | 'rejected') => {
+    setActionLoadingId(requestId);
+    const { error } = await supabase
+      .from('custom_dataset_requests')
+      .update({
+        status: action,
+        reviewed_at: action === 'in_review' ? null : new Date().toISOString(),
+        updated_at: new Date().toISOString(),
+      })
+      .eq('id', requestId);
+    if (error) {
+      console.error('Failed to update custom request status', error);
+      alert('Unable to update custom request status.');
     } else {
       await loadRequests();
     }
@@ -84,8 +118,10 @@ export default function AdminBuyerRequests() {
         ) : (
           <BuyerAccessRequestTable
             requests={requests}
+            customRequests={customRequests}
             products={productsMap}
             onAction={handleAction}
+            onCustomAction={handleCustomAction}
             loadingId={actionLoadingId}
           />
         )}

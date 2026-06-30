@@ -6,6 +6,7 @@ const USER_SCOPED_TABLES = [
   { table: 'buyer_posts', columns: ['user_id'] },
   { table: 'buyer_saved_filters', columns: ['buyer_id', 'user_id'] },
   { table: 'buyer_access_requests', columns: ['buyer_id'] },
+  { table: 'custom_dataset_requests', columns: ['buyer_id'] },
   { table: 'consent_preferences', columns: ['user_id'] },
   { table: 'dataset_access', columns: ['buyer_id', 'user_id'] },
   { table: 'dataset_connectivity_daily', columns: ['user_id'] },

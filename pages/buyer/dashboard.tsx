@@ -2,13 +2,14 @@ import Head from 'next/head';
 import { useEffect, useState } from 'react';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
-import { BuyerAccessRequest, DataProduct } from '../../lib/types';
+import { BuyerAccessRequest, CustomDatasetRequest } from '../../lib/types';
 
 const supabase = getSupabaseClient();
 
 export default function BuyerDashboardPage() {
   const { user, loading: authLoading } = useAuth();
   const [requests, setRequests] = useState<BuyerAccessRequest[]>([]);
+  const [customRequests, setCustomRequests] = useState<CustomDatasetRequest[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -18,28 +19,50 @@ export default function BuyerDashboardPage() {
 
   const loadRequests = async (buyerId: string) => {
     setLoading(true);
-    const { data, error } = await supabase
-      .from('buyer_access_requests')
-      .select('*, data_products(*)')
-      .eq('buyer_id', buyerId)
-      .order('created_at', { ascending: false });
+    const [accessResult, customResult] = await Promise.all([
+      supabase
+        .from('buyer_access_requests')
+        .select('*, data_products(*)')
+        .eq('buyer_id', buyerId)
+        .order('created_at', { ascending: false }),
+      supabase
+        .from('custom_dataset_requests')
+        .select('*')
+        .eq('buyer_id', buyerId)
+        .order('created_at', { ascending: false }),
+    ]);
 
-    if (error) {
-      console.error('Failed to load buyer requests', error);
+    if (accessResult.error) {
+      console.error('Failed to load buyer requests', accessResult.error);
       setRequests([]);
     } else {
-      setRequests((data || []).map((item: any) => ({ ...item, data_products: item.data_products })));
+      setRequests((accessResult.data || []).map((item: any) => ({ ...item, data_products: item.data_products })));
     }
+
+    if (customResult.error) {
+      console.error('Failed to load custom dataset requests', customResult.error);
+      setCustomRequests([]);
+    } else {
+      setCustomRequests((customResult.data || []) as CustomDatasetRequest[]);
+    }
+
     setLoading(false);
   };
 
-  const statusCounts = requests.reduce(
+  const allStatuses = [
+    ...requests.map((request) => request.status),
+    ...customRequests.map((request) => request.status === 'new' ? 'pending' : request.status),
+  ];
+
+  const statusCounts = allStatuses.reduce(
     (acc, request) => {
-      acc[request.status] = (acc[request.status] || 0) + 1;
+      acc[request] = (acc[request] || 0) + 1;
       return acc;
     },
     {} as Record<string, number>
   );
+
+  const hasAnyRequests = requests.length > 0 || customRequests.length > 0;
 
   return (
     <div className="min-h-screen bg-gray-950 text-white p-4 md:p-8">
@@ -98,12 +121,50 @@ export default function BuyerDashboardPage() {
             </div>
           ) : !user ? (
             <p className="text-gray-400">Sign in to view your buyer activity.</p>
-          ) : requests.length === 0 ? (
+          ) : !hasAnyRequests ? (
             <div className="rounded-3xl border border-dashed border-gray-800 p-12 text-center text-gray-400">
-              No dataset access requests yet. Browse the buyer marketplace to request access.
+              No dataset access requests yet. Browse the buyer marketplace or request a custom dataset.
             </div>
           ) : (
             <div className="space-y-4">
+              {customRequests.map((request) => (
+                <div key={request.id} className="rounded-3xl border border-blue-500/30 bg-blue-950/20 p-6">
+                  <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-blue-300">Custom request - {request.status}</p>
+                      <h3 className="text-xl font-semibold text-white">{request.data_category} for {request.target_geography}</h3>
+                      <p className="mt-2 text-gray-400">{request.use_case}</p>
+                    </div>
+                    <div className="text-right text-sm text-gray-400">
+                      <p>Requested</p>
+                      <p className="mt-1 text-white">{new Date(request.created_at).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+
+                  <div className="mt-5 grid gap-4 sm:grid-cols-3">
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-gray-500">Coverage</p>
+                      <p className="mt-2 text-sm text-gray-300">{request.target_geography}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-gray-500">Cadence</p>
+                      <p className="mt-2 text-sm text-gray-300">{request.refresh_cadence}</p>
+                    </div>
+                    <div>
+                      <p className="text-xs uppercase tracking-[0.24em] text-gray-500">Budget</p>
+                      <p className="mt-2 text-sm text-gray-300">{request.budget_range || 'Not specified'}</p>
+                    </div>
+                  </div>
+
+                  {request.admin_notes ? (
+                    <div className="mt-5 rounded-2xl border border-gray-800 bg-gray-950 p-4">
+                      <p className="text-xs uppercase tracking-[0.24em] text-gray-500">Admin notes</p>
+                      <p className="mt-2 text-sm text-gray-300">{request.admin_notes}</p>
+                    </div>
+                  ) : null}
+                </div>
+              ))}
+
               {requests.map((request) => (
                 <div key={request.id} className="rounded-3xl border border-gray-800 bg-gray-950 p-6">
                   <div className="flex flex-col gap-3 md:flex-row md:items-start md:justify-between">

@@ -62,8 +62,11 @@ export interface CustomDatasetRequest {
   timeline: string;
   budget_range?: string;
   notes?: string;
+  admin_notes?: string | null;
+  reviewed_at?: string | null;
   status: 'new' | 'in_review' | 'approved' | 'rejected';
   created_at: string;
+  updated_at?: string;
 }
 
 export interface DataProductSampleRow {

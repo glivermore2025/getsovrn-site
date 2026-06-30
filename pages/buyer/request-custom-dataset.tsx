@@ -1,4 +1,5 @@
 import Head from 'next/head';
+import Link from 'next/link';
 import { FormEvent, useState } from 'react';
 import { getSupabaseClient } from '../../lib/supabaseClient';
 import { useAuth } from '../../lib/authContext';
@@ -26,6 +27,12 @@ export default function RequestCustomDatasetPage() {
     setError(null);
     setStatus('submitting');
 
+    if (!user) {
+      setError('Please sign in before submitting a custom dataset request.');
+      setStatus('error');
+      return;
+    }
+
     if (!companyName || !buyerName || !email || !useCase) {
       setError('Please fill in the required fields.');
       setStatus('error');
@@ -35,7 +42,7 @@ export default function RequestCustomDatasetPage() {
     try {
       const { error: insertError } = await supabase.from('custom_dataset_requests').insert([
         {
-          buyer_id: user?.id ?? null,
+          buyer_id: user.id,
           buyer_name: buyerName,
           company_name: companyName,
           email,
@@ -76,6 +83,22 @@ export default function RequestCustomDatasetPage() {
             If you need a dataset that is not yet published in the marketplace, submit your requirements here and our team will follow up with pilot pricing and availability.
           </p>
         </section>
+
+        {authLoading ? (
+          <div className="rounded-3xl border border-gray-800 bg-gray-900 p-8 text-center text-gray-400">
+            Checking account...
+          </div>
+        ) : !user ? (
+          <div className="rounded-3xl border border-dashed border-gray-800 bg-gray-900 p-12 text-center">
+            <p className="text-lg font-semibold text-white">Sign in to request a custom dataset.</p>
+            <p className="mx-auto mt-3 max-w-2xl text-gray-400">
+              Custom access requests are attached to your buyer account so you can track review status from the Buyer Dashboard.
+            </p>
+            <Link href="/login" className="mt-6 inline-flex rounded-full bg-blue-600 px-6 py-3 text-sm font-semibold text-white hover:bg-blue-700">
+              Sign In
+            </Link>
+          </div>
+        ) : (
 
         <section className="rounded-3xl border border-gray-800 bg-gray-900 p-8">
           <form onSubmit={handleSubmit} className="space-y-6">
@@ -212,15 +235,19 @@ export default function RequestCustomDatasetPage() {
             </div>
 
             {status === 'success' && (
-              <p className="rounded-2xl bg-green-950 border border-green-700 p-4 text-sm text-green-300">
-                Your request has been submitted. We will follow up with next steps soon.
-              </p>
+              <div className="rounded-2xl bg-green-950 border border-green-700 p-4 text-sm text-green-300">
+                <p>Your request has been submitted. We will follow up with next steps soon.</p>
+                <Link href="/buyer/dashboard" className="mt-3 inline-flex text-green-200 underline">
+                  Track this request in Buyer Dashboard
+                </Link>
+              </div>
             )}
             {status === 'error' && error && (
               <p className="rounded-2xl bg-red-950 border border-red-700 p-4 text-sm text-red-300">{error}</p>
             )}
           </form>
         </section>
+        )}
       </div>
     </div>
   );
